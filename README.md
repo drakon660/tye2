@@ -1,3 +1,5 @@
+[![CI](https://github.com/drakon660/tye2/actions/workflows/ci.yaml/badge.svg)](https://github.com/drakon660/tye2/actions/workflows/ci.yaml)
+
 # Tye2
 
 ## Intro
