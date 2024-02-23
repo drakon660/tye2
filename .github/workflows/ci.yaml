@@ -25,5 +25,9 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
-    - name: Test
+    - name: UnitTests
       run: dotnet test ./test/UnitTests --no-restore --verbosity normal
+    - name: InfrastructureTests
+      run: dotnet test ./test/Test.Infrastructure --no-restore --verbosity normal
+    - name: ConfigurationTests
+      run: dotnet test ./test/Microsoft.Tye.Extensions.Configuration.Tests --no-restore --verbosity normal      
