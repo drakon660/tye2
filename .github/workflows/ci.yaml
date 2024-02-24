@@ -47,4 +47,4 @@ jobs:
     #- name: ConfigurationTests
      # run: dotnet test ./test/Microsoft.Tye.Extensions.Configuration.Tests --no-restore --verbosity normal
     - name: E2ETests
-      run: dotnet test ./test/E2ETests --no-restore --verbosity normal    
+      run: dotnet test ./test/E2ETest --no-restore --verbosity normal    
