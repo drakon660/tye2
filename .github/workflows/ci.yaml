@@ -32,4 +32,4 @@ jobs:
     #- name: ConfigurationTests
      # run: dotnet test ./test/Microsoft.Tye.Extensions.Configuration.Tests --no-restore --verbosity normal
     - name: E2ETests
-      run: dotnet test --filter FullyQualifiedName=Microsoft.Tye.E2ETests.E2ETests.CyclesStopImmediately --no-restore --verbosity normal    
+      run: dotnet test --filter CyclesStopImmediately --no-restore --verbosity normal    
