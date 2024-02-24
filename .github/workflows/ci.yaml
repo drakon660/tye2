@@ -25,6 +25,21 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+        # Install Azure Functions Core Tools
+    - name: Install Azure Functions Core Tools
+      run: |
+        curl -sL https://aka.ms/install-artifacts-credprovider.sh | bash
+        npm i -g azure-functions-core-tools@3 --unsafe-perm true
+    # Install Dapr CLI
+    - name: Install Dapr CLI
+      run: |
+        wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | /bin/bash
+        dapr --version
+    # Initialize Dapr
+    - name: Initialize Dapr
+      run: dapr init
     #- name: UnitTests
      # run: dotnet test ./test/UnitTests --no-restore --verbosity normal
     #- name: InfrastructureTests
@@ -32,4 +47,4 @@ jobs:
     #- name: ConfigurationTests
      # run: dotnet test ./test/Microsoft.Tye.Extensions.Configuration.Tests --no-restore --verbosity normal
     - name: E2ETests
-      run: dotnet test --filter CyclesStopImmediately --no-restore --verbosity normal    
+      run: dotnet test ./test/E2ETests --no-restore --verbosity normal    
