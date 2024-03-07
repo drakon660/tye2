@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   base: '/tye-v2.github.io/',
   title: "Tye 2",
+  ignoreDeadLinks: true,
   description: "Tye",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
