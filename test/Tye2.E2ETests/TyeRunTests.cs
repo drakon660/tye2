@@ -154,16 +154,22 @@ services:
             {
                 //The backend calls the Function app via Dapr InvokeMethod. So test that that func has a sidecar, and being proxied.
                 var backendUri = await GetServiceUrl(client, uri, "dapr-test-project");
-                
-                //Wait for the services to start
-                await Task.Delay(10000);
-                
-                var backendResponse = await client.GetAsync(backendUri);
-                
-                Assert.True(backendResponse.IsSuccessStatusCode);
-                
-                var responseContent = await backendResponse.Content.ReadAsStringAsync();
-                responseContent.Should().Contain("Welcome to Azure Functions!");
+
+                await WaitUntilAsync(
+                    async () =>
+                    {
+                        var backendResponse = await client.GetAsync(backendUri);
+                        if (!backendResponse.IsSuccessStatusCode)
+                        {
+                            return false;
+                        }
+
+                        var responseContent = await backendResponse.Content.ReadAsStringAsync();
+                        return responseContent.Contains("Welcome to Azure Functions!");
+                    },
+                    TimeSpan.FromSeconds(20),
+                    TimeSpan.FromMilliseconds(500),
+                    "Backend did not become ready for Dapr Azure Function test in time.");
             });
         }
 
@@ -426,7 +432,7 @@ services:
                         return;
                     }
 
-                    await Task.Delay(5000);
+                    await Task.Delay(500);
                 }
 
                 throw new Exception("Failed to relaunch project with dotnet watch");
@@ -477,7 +483,7 @@ services:
                         return;
                     }
 
-                    await Task.Delay(5000);
+                    await Task.Delay(500);
                 }
 
                 throw new Exception("Failed to relaunch project with dotnet watch");
@@ -1462,20 +1468,24 @@ services:
             {
                 var frontendUri = await GetServiceUrl(client, uri, "frontend");
                 var backendUri = await GetServiceUrl(client, uri, "backend");
-                
-                //need to make it slower
-                await Task.Delay(TimeSpan.FromSeconds(2));
+
                 await client.GetAsync(frontendUri);
-                //need to make it slower
-                await Task.Delay(TimeSpan.FromSeconds(2));
                 await client.GetAsync(backendUri);
-                //wait for zipkin to consume traces
-                await Task.Delay(TimeSpan.FromSeconds(2));
-                
+
                 var zipkinClient = GetZipkin(zipkinPort);
-                var services = await zipkinClient.GetServices();
+                var services = await WaitForResultAsync(
+                    () => zipkinClient.GetServices(),
+                    r => r is { Count: 2 },
+                    TimeSpan.FromSeconds(20),
+                    TimeSpan.FromMilliseconds(500),
+                    "Zipkin did not report expected services in time.");
                 services.Count.Should().Be(2);
-                var traces = await zipkinClient.GetTraces("frontend");
+                var traces = await WaitForResultAsync(
+                    () => zipkinClient.GetTraces("frontend"),
+                    r => r is { Count: > 0 },
+                    TimeSpan.FromSeconds(20),
+                    TimeSpan.FromMilliseconds(500),
+                    "Zipkin did not report frontend traces in time.");
                 traces.Count.Should().Be(1);
                 var internalTraces = traces.First();
                 var serverFrontendTrace =
@@ -1506,6 +1516,7 @@ services:
         {
             await using var host = new TyeHost(application.ToHostingApplication(), options);
             host.Sink = _sink;
+            var completed = false;
 
             try
             {
@@ -1514,10 +1525,11 @@ services:
                 var uri = new Uri(host.Addresses!.First());
 
                 await execute(host.Application, uri!);
+                completed = true;
             }
             finally
             {
-                if (host.DashboardWebApplication != null)
+                if (!completed && host.DashboardWebApplication != null && host.Addresses != null && host.Addresses.Any())
                 {
                     var uri = new Uri(host.Addresses!.First());
 
@@ -1540,8 +1552,39 @@ services:
                 await DockerAssert.CleanupManagedResourcesAsync(_output, application.Source.DirectoryName);
             }
         }
+
+        private static async Task WaitUntilAsync(Func<Task<bool>> condition, TimeSpan timeout, TimeSpan interval, string timeoutMessage)
+        {
+            var start = DateTime.UtcNow;
+            while (DateTime.UtcNow - start < timeout)
+            {
+                if (await condition())
+                {
+                    return;
+                }
+
+                await Task.Delay(interval);
+            }
+
+            throw new TimeoutException(timeoutMessage);
+        }
+
+        private static async Task<T> WaitForResultAsync<T>(Func<Task<T>> action, Func<T, bool> predicate, TimeSpan timeout, TimeSpan interval, string timeoutMessage)
+        {
+            var start = DateTime.UtcNow;
+
+            while (DateTime.UtcNow - start < timeout)
+            {
+                var result = await action();
+                if (predicate(result))
+                {
+                    return result;
+                }
+
+                await Task.Delay(interval);
+            }
+
+            throw new TimeoutException(timeoutMessage);
+        }
     }
 }
-
-
-
