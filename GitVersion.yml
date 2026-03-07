@@ -1,3 +1,4 @@
+next-version: 0.11.0
 workflow: GitHubFlow/v1
 strategies:
   - Fallback
@@ -11,3 +12,4 @@ branches: {}
 ignore:
   sha: []
 merge-message-formats: {}
+
