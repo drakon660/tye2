@@ -13,8 +13,6 @@ on:
         required: true
         default: "7"
         type: string
-  schedule:
-    - cron: "0 3 * * 0"
 
 permissions:
   contents: write
