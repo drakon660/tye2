@@ -2,10 +2,6 @@ name: CD
 
 on:
   workflow_dispatch:
-  push:
-    branches: ["main"]
-    paths:
-      - 'src/**'
 
 jobs:
   build:
@@ -47,5 +43,7 @@ jobs:
         with:
           name: tye2-${{ steps.gitversion.outputs.SemVer }}.zip
           path: ./tye2-publish
+
+
 
 
