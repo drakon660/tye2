@@ -1,6 +1,6 @@
 # Frontend Backend sample with tye run
 
-This tutorial will demonstrate how to use [`tye run`](/docs/reference/commandline/tye-run.md) to run a multi-project application. If you haven't done so already, follow the [Getting Started Instructions](/docs/getting_started.md) to install tye.
+This tutorial will demonstrate how to use [`tye run`](/commandline/tye-run.md) to run a multi-project application. If you haven't done so already, follow the [Getting Started Instructions](/getting-started) to install tye.
 
 ## Running a single application with tye run
 
@@ -62,7 +62,7 @@ This tutorial will demonstrate how to use [`tye run`](/docs/reference/commandlin
 
 ## Getting the frontend to communicate with the backend
 
-Now that we have two applications running, let's make them communicate. By default, `tye` enables service discovery by injecting environment variables with a specific naming convention. For more information on, see [service discovery](/docs/reference/service_discovery.md).
+Now that we have two applications running, let's make them communicate. By default, `tye` enables service discovery by injecting environment variables with a specific naming convention. For more information on, see [service discovery](/reference/service_discovery).
 
 1. If you haven't already, stop the existing `tye run` command using `Ctrl + C`. Open the solution in your editor of choice.
 
@@ -200,14 +200,14 @@ Now that we have two applications running, let's make them communicate. By defau
     </table>
    ```
 
-8.  Run the project with [`tye run`](/docs/reference/commandline/tye-run.md) and the `frontend` service should be able to successfully call the `backend` service!
+8.  Run the project with [`tye run`](/commandline/tye-run.md) and the `frontend` service should be able to successfully call the `backend` service!
 
     When you visit the `frontend` service you should see a table of weather data. This data was produced randomly in the `backend` service. The fact that you're seeing it in a web UI in the `frontend` means that the services are able to communicate. Unfortunately, this doesn't work out of the box on Linux
     right now due to how self-signed certificates are handled, please see the workaround [below](#troubleshooting)
 
 ## Next Steps
 
-Now that you are able to run a multi-project application with [`tye run`](/docs/reference/commandline/tye-run.md), move on to [the next step (deploy)](01_deploy.md) to learn how to deploy this application to Kubernetes.
+Now that you are able to run a multi-project application with [`tye run`](/commandline/tye-run.md), move on to [the next step (deploy)](01_deploy.md) to learn how to deploy this application to Kubernetes.
 
 
 ## Troubleshooting
@@ -280,3 +280,5 @@ to `appsettings.json`
 ```
 
 You may still get an untrusted warning with your browser but it will work with dotnet.
+
+

@@ -25,7 +25,7 @@ services:
   project: project2/project2.csproj
 ```
 
-See [the tye.yaml schema](/docs/reference/schema.md) to learn more about customizations that can be made to the `tye.yaml` file.
+See [the tye.yaml schema](/reference/schema) to learn more about customizations that can be made to the `tye.yaml` file.
 
 ## Arguments
 
@@ -64,3 +64,4 @@ The path to either a file or directory to run `tye init` on. Can either be a yam
     ```text
     tye init app.sln
     ```
+
