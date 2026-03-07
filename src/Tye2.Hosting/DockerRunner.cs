@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +19,12 @@ namespace Tye2.Hosting
     public class DockerRunner : IApplicationProcessor
     {
         private const string DockerReplicaStore = "docker";
+        private const string ManagedLabelKey = "tye2.managed";
+        private const string ManagedLabelValue = "true";
+        private const string ServiceLabelKey = "tye2.service";
+        private const string AppLabelKey = "tye2.app";
+        private const string RunIdLabelKey = "tye2.runid";
+        private const string ContextLabelKey = "tye2.context";
 
         private static readonly TimeSpan DockerStopTimeout = TimeSpan.FromSeconds(30);
         private readonly ILogger _logger;
@@ -34,7 +41,8 @@ namespace Tye2.Hosting
 
         public async Task StartAsync(Application application)
         {
-            await PurgeFromPreviousRun(application);
+            var contextLabel = CreateContextLabel(application.ContextDirectory);
+            var runId = Guid.NewGuid().ToString("N").Substring(0, 12);
 
             var containers = new List<Service>();
 
@@ -50,6 +58,8 @@ namespace Tye2.Hosting
             {
                 return;
             }
+
+            await PurgeFromPreviousRun(application, contextLabel);
 
             var proxies = new List<Service>();
             foreach (var service in application.Services.Values)
@@ -139,7 +149,7 @@ namespace Tye2.Hosting
 
                 _logger.LogInformation("Creating docker network {Network}", dockerNetwork);
 
-                var command = $"network create --driver bridge {dockerNetwork}";
+                var command = $"network create --driver bridge --label \"{ManagedLabelKey}={ManagedLabelValue}\" --label \"{ContextLabelKey}={contextLabel}\" --label \"{AppLabelKey}={EscapeDockerLabelValue(application.Name)}\" --label \"{RunIdLabelKey}={runId}\" {dockerNetwork}";
 
                 _logger.LogInformation("Running docker command {Command}", command);
 
@@ -160,7 +170,7 @@ namespace Tye2.Hosting
             {
                 var docker = (DockerRunInfo)s.Description.RunInfo!;
 
-                StartContainerAsync(application, s, docker, dockerNetwork);
+                StartContainerAsync(application, s, docker, dockerNetwork, runId, contextLabel);
             }
         }
 
@@ -202,7 +212,7 @@ namespace Tye2.Hosting
             }
         }
 
-        private void StartContainerAsync(Application application, Service service, DockerRunInfo docker, string? dockerNetwork)
+        private void StartContainerAsync(Application application, Service service, DockerRunInfo docker, string? dockerNetwork, string runId, string contextLabel)
         {
             var serviceDescription = service.Description;
             var workingDirectory = docker.WorkingDirectory != null ? $"-w \"{docker.WorkingDirectory}\"" : "";
@@ -306,7 +316,9 @@ namespace Tye2.Hosting
                     }
                 }
 
-                var command = $"run -d {workingDirectory} {volumes} {environmentArguments} {portString} --name {replica} --restart=unless-stopped";
+                var labelArguments = $"--label \"{ManagedLabelKey}={ManagedLabelValue}\" --label \"{ContextLabelKey}={contextLabel}\" --label \"{AppLabelKey}={EscapeDockerLabelValue(application.Name)}\" --label \"{RunIdLabelKey}={runId}\" --label \"{ServiceLabelKey}={EscapeDockerLabelValue(service.Description.Name)}\"";
+                var restartPolicy = _options.EnableContainerAutoRestart ? "--restart=unless-stopped" : string.Empty;
+                var command = $"run -d {workingDirectory} {volumes} {environmentArguments} {portString} --name {replica} {labelArguments} {restartPolicy}";
                 if (!string.IsNullOrEmpty(dockerNetwork))
                 {
                     status.DockerNetworkAlias = docker.NetworkAlias ?? serviceDescription!.Name;
@@ -558,7 +570,7 @@ namespace Tye2.Hosting
             service.Items[typeof(DockerInformation)] = dockerInfo;
         }
 
-        private async Task PurgeFromPreviousRun(Application application)
+        private async Task PurgeFromPreviousRun(Application application, string contextLabel)
         {
             var dockerReplicas = await _replicaRegistry.GetEvents(DockerReplicaStore);
             foreach (var replica in dockerReplicas)
@@ -568,9 +580,64 @@ namespace Tye2.Hosting
                 _logger.LogInformation("removed container {container} from previous run", container);
             }
 
+            await RemoveStaleContainersForContextAsync(application, contextLabel);
+            await RemoveStaleNetworksForContextAsync(application, contextLabel);
+
             _replicaRegistry.DeleteStore(DockerReplicaStore);
         }
 
+        private async Task RemoveStaleContainersForContextAsync(Application application, string contextLabel)
+        {
+            var list = await application.ContainerEngine.RunAsync($"ps -aq --filter \"label={ManagedLabelKey}={ManagedLabelValue}\" --filter \"label={ContextLabelKey}={contextLabel}\"", throwOnError: false);
+            if (list.ExitCode != 0 || string.IsNullOrWhiteSpace(list.StandardOutput))
+            {
+                return;
+            }
+
+            var containerIds = list.StandardOutput
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var containerId in containerIds)
+            {
+                await application.ContainerEngine.RunAsync($"rm -f {containerId}", throwOnError: false);
+                _logger.LogInformation("removed stale container {containerId} from matching context", containerId);
+            }
+        }
+
+        private async Task RemoveStaleNetworksForContextAsync(Application application, string contextLabel)
+        {
+            var list = await application.ContainerEngine.RunAsync($"network ls -q --filter \"label={ManagedLabelKey}={ManagedLabelValue}\" --filter \"label={ContextLabelKey}={contextLabel}\"", throwOnError: false);
+            if (list.ExitCode != 0 || string.IsNullOrWhiteSpace(list.StandardOutput))
+            {
+                return;
+            }
+
+            var networkIds = list.StandardOutput
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var networkId in networkIds)
+            {
+                await application.ContainerEngine.RunAsync($"network rm {networkId}", throwOnError: false);
+                _logger.LogInformation("removed stale docker network {networkId} from matching context", networkId);
+            }
+        }
+
+        private static string CreateContextLabel(string contextDirectory)
+        {
+            var normalized = Path.GetFullPath(contextDirectory)
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .ToLowerInvariant();
+
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(normalized));
+            return Convert.ToHexString(hash).Substring(0, 16).ToLowerInvariant();
+        }
+
+        private static string EscapeDockerLabelValue(string value)
+        {
+            return value.Replace("\"", "\\\"");
+        }
         private void WriteReplicaToStore(string container)
         {
             _replicaRegistry.WriteReplicaEvent(DockerReplicaStore, new Dictionary<string, string>()
@@ -658,3 +725,4 @@ namespace Tye2.Hosting
         }
     }
 }
+

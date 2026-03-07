@@ -1,9 +1,11 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Tye2.Core;
@@ -14,7 +16,11 @@ namespace Tye2.Test.Infrastructure
 {
     public static class DockerAssert
     {
-        // Repository is the "registry/image" format. Yeah Docker uses that term for it, and it's 
+        private const string ManagedLabelKey = "tye2.managed";
+        private const string ManagedLabelValue = "true";
+        private const string ContextLabelKey = "tye2.context";
+
+        // Repository is the "registry/image" format. Yeah Docker uses that term for it, and it's
         // weird and confusing.
         public static async Task AssertImageExistsAsync(ITestOutputHelper output, string repository)
         {
@@ -37,7 +43,7 @@ namespace Tye2.Test.Infrastructure
                 return;
             }
 
-            throw new XunitException($"Image '{repository}' was not found in {builder.ToString()}.");
+            throw new XunitException($"Image '{repository}' was not found in {builder}." );
 
             void OnOutput(string text)
             {
@@ -54,7 +60,6 @@ namespace Tye2.Test.Infrastructure
 
             foreach (var id in ids)
             {
-
                 output.WriteLine($"> docker rmi \"{id}\" --force");
                 var exitCode = await ContainerEngine.Default.ExecuteAsync(
                     $"rmi \"{id}\" --force",
@@ -79,9 +84,9 @@ namespace Tye2.Test.Infrastructure
         {
             var builder = new StringBuilder();
 
-            output.WriteLine($"> docker ps --format \"{{{{.ID}}}}\"");
+            output.WriteLine("> docker ps --format \"{{.ID}}\"");
             var exitCode = await ContainerEngine.Default.ExecuteAsync(
-                $"ps --format \"{{{{.ID}}}}\"",
+                "ps --format \"{{.ID}}\"",
                 stdOut: OnOutput,
                 stdErr: OnOutput);
             if (exitCode != 0)
@@ -96,6 +101,71 @@ namespace Tye2.Test.Infrastructure
             {
                 builder.AppendLine(text);
                 output.WriteLine(text);
+            }
+        }
+
+        // Best-effort cleanup used in test finally blocks; does not throw on cleanup failures.
+        public static async Task CleanupManagedResourcesAsync(ITestOutputHelper output, string contextDirectory = null)
+        {
+            if (!ContainerEngine.Default.IsUsable(out _))
+            {
+                return;
+            }
+
+            var contextFilter = string.Empty;
+            if (!string.IsNullOrWhiteSpace(contextDirectory))
+            {
+                var contextLabel = CreateContextLabel(contextDirectory);
+                contextFilter = $" --filter \"label={ContextLabelKey}={contextLabel}\"";
+            }
+
+            await RemoveByQueryAsync(output,
+                $"ps -aq --filter \"label={ManagedLabelKey}={ManagedLabelValue}\"{contextFilter}",
+                id => $"rm -f {id}");
+
+            await RemoveByQueryAsync(output,
+                $"network ls -q --filter \"label={ManagedLabelKey}={ManagedLabelValue}\"{contextFilter}",
+                id => $"network rm {id}");
+        }
+
+        private static async Task RemoveByQueryAsync(ITestOutputHelper output, string listCommand, Func<string, string> removeCommandFactory)
+        {
+            var listingOutput = new StringBuilder();
+            output.WriteLine($"> docker {listCommand}");
+            var listExitCode = await ContainerEngine.Default.ExecuteAsync(
+                listCommand,
+                stdOut: data =>
+                {
+                    listingOutput.AppendLine(data);
+                    output.WriteLine(data);
+                },
+                stdErr: data => output.WriteLine(data));
+
+            if (listExitCode != 0)
+            {
+                output.WriteLine($"docker {listCommand} failed with exit code {listExitCode}; skipping cleanup for this resource type.");
+                return;
+            }
+
+            var ids = listingOutput
+                .ToString()
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            foreach (var id in ids)
+            {
+                var removeCommand = removeCommandFactory(id);
+                output.WriteLine($"> docker {removeCommand}");
+                var removeExitCode = await ContainerEngine.Default.ExecuteAsync(
+                    removeCommand,
+                    stdOut: output.WriteLine,
+                    stdErr: output.WriteLine);
+
+                if (removeExitCode != 0)
+                {
+                    output.WriteLine($"docker {removeCommand} failed with exit code {removeExitCode}; continuing cleanup.");
+                }
             }
         }
 
@@ -124,6 +194,16 @@ namespace Tye2.Test.Infrastructure
                 builder.AppendLine(text);
                 output.WriteLine(text);
             }
+        }
+
+        private static string CreateContextLabel(string contextDirectory)
+        {
+            var normalized = Path.GetFullPath(contextDirectory)
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .ToLowerInvariant();
+
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(normalized));
+            return Convert.ToHexString(hash).Substring(0, 16).ToLowerInvariant();
         }
     }
 }
