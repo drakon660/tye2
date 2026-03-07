@@ -1,0 +1,153 @@
+name: Branch Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Preview actions without deleting branches
+        required: true
+        default: true
+        type: boolean
+      min_days_without_commit:
+        description: Minimum branch age in days before deletion
+        required: true
+        default: "7"
+        type: string
+  schedule:
+    - cron: "0 3 * * 0"
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete stale feature branches
+        uses: actions/github-script@v7
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run || 'false' }}
+          MIN_DAYS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.min_days_without_commit || '7' }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prefixes = ["feature/", "bugfix/", "hotfix/", "codex/feature/", "codex/bugfix/", "codex/hotfix/"];
+            const dryRun = String(process.env.DRY_RUN).toLowerCase() === "true";
+            const minDays = Number.parseInt(process.env.MIN_DAYS ?? "7", 10);
+            const now = new Date();
+
+            if (Number.isNaN(minDays) || minDays < 0) {
+              core.setFailed(`Invalid MIN_DAYS value: ${process.env.MIN_DAYS}`);
+              return;
+            }
+
+            const { data: repoData } = await github.rest.repos.get({ owner, repo });
+            const defaultBranch = repoData.default_branch;
+
+            const branches = await github.paginate(github.rest.repos.listBranches, {
+              owner,
+              repo,
+              protected: false,
+              per_page: 100,
+            });
+
+            const candidates = branches.filter((branch) =>
+              prefixes.some((prefix) => branch.name.startsWith(prefix))
+            );
+
+            const deleted = [];
+            const skipped = [];
+
+            for (const branch of candidates) {
+              if (branch.name === defaultBranch) {
+                skipped.push({ branch: branch.name, reason: "default branch" });
+                continue;
+              }
+
+              if (branch.protected) {
+                skipped.push({ branch: branch.name, reason: "protected" });
+                continue;
+              }
+
+              const { data: pulls } = await github.rest.pulls.list({
+                owner,
+                repo,
+                state: "open",
+                head: `${owner}:${branch.name}`,
+                per_page: 1,
+              });
+
+              if (pulls.length > 0) {
+                skipped.push({ branch: branch.name, reason: "open pull request" });
+                continue;
+              }
+
+              const { data: commit } = await github.rest.repos.getCommit({
+                owner,
+                repo,
+                ref: branch.name,
+              });
+
+              const authoredAt =
+                commit.commit.author?.date ?? commit.commit.committer?.date;
+
+              if (!authoredAt) {
+                skipped.push({ branch: branch.name, reason: "missing commit date" });
+                continue;
+              }
+
+              const ageMs = now.getTime() - new Date(authoredAt).getTime();
+              const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+
+              if (ageDays < minDays) {
+                skipped.push({
+                  branch: branch.name,
+                  reason: `age ${ageDays}d < ${minDays}d`,
+                });
+                continue;
+              }
+
+              if (dryRun) {
+                core.info(`[dry-run] Would delete ${branch.name} (age ${ageDays}d)`);
+                deleted.push({ branch: branch.name, dryRun: true, ageDays });
+                continue;
+              }
+
+              await github.rest.git.deleteRef({
+                owner,
+                repo,
+                ref: `heads/${branch.name}`,
+              });
+
+              core.info(`Deleted ${branch.name} (age ${ageDays}d)`);
+              deleted.push({ branch: branch.name, dryRun: false, ageDays });
+            }
+
+            core.summary
+              .addHeading("Branch Cleanup")
+              .addRaw(`Dry run: ${dryRun}\n`, true)
+              .addRaw(`Minimum age: ${minDays} days\n`, true)
+              .addRaw(`Candidates: ${candidates.length}\n`, true)
+              .addRaw(`Deleted/Would delete: ${deleted.length}\n`, true)
+              .addRaw(`Skipped: ${skipped.length}\n`, true)
+              .addRaw("\n", true);
+
+            if (deleted.length > 0) {
+              core.summary.addHeading("Deleted or Planned", 2);
+              for (const item of deleted) {
+                core.summary.addRaw(`- ${item.branch} (${item.ageDays}d)\n`, true);
+              }
+            }
+
+            if (skipped.length > 0) {
+              core.summary.addHeading("Skipped", 2);
+              for (const item of skipped) {
+                core.summary.addRaw(`- ${item.branch}: ${item.reason}\n`, true);
+              }
+            }
+
+            await core.summary.write();
+
+
