@@ -152,7 +152,7 @@ To remove the deployed application run the following commands:
 
 ```sh
 tye undeploy
-kubectl delete -f https://github.com/dotnet/tye/blob/main/docs/recipes/zipkin.yaml
+kubectl delete -f https://raw.githubusercontent.com/dotnet/tye/main/docs/recipes/zipkin.yaml
 ```
 
 ## How this works
@@ -197,3 +197,4 @@ info: Microsoft.Tye.DiagnosticsMonitor[0]
 info: Microsoft.Tye.DiagnosticsMonitor[0]
       Listening for event pipe events for frontend-7c94f75f98-zdqzf on process id 7
 ```
+

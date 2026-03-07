@@ -383,7 +383,7 @@ The value of the build property.
 Bindings represent protocols *exposed* by a service. How bindings are specified can affect both:
 
 - How a project is run.
-- How [service discovery](/docs/reference/service_discovery.md) is performed.
+- How [service discovery](/reference/service_discovery) is performed.
 
 Bindings should either provide:
 
@@ -411,21 +411,21 @@ services:
 
 The name of the binding. Binding names are optional and should be omitted when a service contains a single binding. If a service provides two or more bindings, then they all must have names.
 
-Names are part of the [service discovery](/docs/reference/service_discovery.md) protocol.
+Names are part of the [service discovery](/reference/service_discovery) protocol.
 
 #### `connectionString` (string)
 
-The connection string of the binding. Connection strings should be used when connecting to the binding requires additional information besides a URL. [Service discovery](/docs/reference/service_discovery.md) treats connection string as a single opaque value and will ignore other properties like `port`. 
+The connection string of the binding. Connection strings should be used when connecting to the binding requires additional information besides a URL. [Service discovery](/reference/service_discovery) treats connection string as a single opaque value and will ignore other properties like `port`. 
 
 As an example, connecting to a hosted redis using authentication requires a URL as well as username and password. Using a connection string is typical for databases or anything that requires authentication.
 
 #### `protocol` (string)
 
-Specifies the protocol used by the binding. The protocol is used in [service discovery](/docs/reference/service_discovery.md) to construct a URL. It's safe to omit the `protocol` when it's not needed to connect to the service. As an example, connecting to redis without authentication only requires a hostname and port.
+Specifies the protocol used by the binding. The protocol is used in [service discovery](/reference/service_discovery) to construct a URL. It's safe to omit the `protocol` when it's not needed to connect to the service. As an example, connecting to redis without authentication only requires a hostname and port.
 
 #### `host` (string)
 
-Specifies the hostname used by the binding. The protocol is used in [service discovery](/docs/reference/service_discovery.md) to construct a URL. It's safe to omit the `host` when localhost should be used for local development.
+Specifies the hostname used by the binding. The protocol is used in [service discovery](/reference/service_discovery) to construct a URL. It's safe to omit the `host` when localhost should be used for local development.
 
 #### `routes` (`string[]`)
 
@@ -433,7 +433,7 @@ Specifies the list of additional routes to show in Bindings on the Dashboard for
 
 #### `port` (string)
 
-Specifies the port used by the binding. The port is used in [service discovery](/docs/reference/service_discovery.md) to construct a URL.
+Specifies the port used by the binding. The port is used in [service discovery](/reference/service_discovery) to construct a URL.
 
 #### `internalPort` (string deprecated, use containerPort instead)
 
@@ -829,3 +829,4 @@ The port for the Dapr profile servicer to listen on.
 #### `services` (`(string, object)[]`) *extension-level*
 
 The dictionary in which service-level configuration can be set.
+

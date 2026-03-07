@@ -6,7 +6,7 @@ This approach is referred to as *ingress*. The proxy server and surrounding mana
 
 Tye provides an opinionated and simple way of configuring ingress for local development, as well as deploying to Kubernetes using the popular [NGINX Ingress Controller for Kubernetes](https://github.com/kubernetes/ingress-nginx).
 
-> :bulb: Ingress features related to deployment are new as part of the Tye 0.2 release. The local run part of this tutorial will work with the latest nuget.org release. For deployment, follow the instructions [here](/docs/getting_started.md#working-with-ci-builds) to install a newer build.
+> :bulb: Ingress features related to deployment are new as part of the Tye 0.2 release. The local run part of this tutorial will work with the latest nuget.org release. For deployment, follow the instructions [here](/getting-started#working-with-ci-builds) to install a newer build.
 
 ## Running Locally with Ingress
 
@@ -133,7 +133,7 @@ curl -H "Host: a.example.com" "http://localhost:8080/testpath"
 
 ## Deploying with Ingress
 
->:bulb: Ingress features related to deployment are new as part of the Tye 0.2 release. The local run part of this tutorial will work with the latest nuget.org release. For deployment, follow the instructions [here](/docs/getting_started.md#working-with-ci-builds) to install a newer build.
+>:bulb: Ingress features related to deployment are new as part of the Tye 0.2 release. The local run part of this tutorial will work with the latest nuget.org release. For deployment, follow the instructions [here](/getting-started#working-with-ci-builds) to install a newer build.
 
 Deploying an application with ingress to Kubernetes requires the deployment of an *ingress controller* to the cluster. Tye provides a guided installation workflow that will be described here. You may want to deploy the NGINX Ingress Controller for Kubernetes manually after reading [the instructions relevant to your cloud provider](https://kubernetes.github.io/ingress-nginx/deploy/).
 
@@ -271,3 +271,4 @@ kubectl delete -f https://aka.ms/tye/ingress/deploy
 ```
 
 > :warning: If you're using minikube this command won't remove anything, and may error out. This is because `ingress-nginx` in a simplified form is bundled as part of minikube. You can disable the controller by running `minikube addons disable ingress`.
+

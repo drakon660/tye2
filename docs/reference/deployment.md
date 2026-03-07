@@ -1,6 +1,6 @@
 # Deployment
 
-*This document is a conceptual overview of how Tye behaves when using `tye deploy` for deployment. For reference docs  on the `tye deploy` command see the [command line doc](/docs/reference/commandline/tye-deploy.md).*
+*This document is a conceptual overview of how Tye behaves when using `tye deploy` for deployment. For reference docs  on the `tye deploy` command see the [command line doc](/commandline/tye-deploy.md).*
 
 Tye simplifies many of the common concerns when deploying services, including creating docker files, docker images, Kubernetes manifests, and service discovery.
 
@@ -27,7 +27,7 @@ This is also where Tye requires a container registry to properly set the image n
 
 ### Compute bindings
 
-In order for services to communicate inside of a Kubernetes cluster, Tye will set environment variables appropriately services can communicate. This section will summarize some of the key information for deployment, but the best guide for the topic is the [service discovery documentation](/docs/reference/service_discovery.md).
+In order for services to communicate inside of a Kubernetes cluster, Tye will set environment variables appropriately services can communicate. This section will summarize some of the key information for deployment, but the best guide for the topic is the [service discovery documentation](/reference/service_discovery).
 
 Bindings for service discovery by default are `http` (not `https`) in Kubernetes. The default port will be port 80 for `http` if not specified.
 
@@ -43,7 +43,7 @@ SERVICE__{serviceName}_PORT={port} (default to 80)
 SERVICE__{serviceName}_HOST={host} (default to serviceName as host)
 ```
 
-If the target service is an external service, instead Tye will use Kubernetes secrets for service discovery rather than environment variables. See our [service discovery documentation](/docs/reference/service_discovery.md#How-it-works:-Deployed-applications) for in-depth information on why we use secrets instead of environment variables and how they are set.
+If the target service is an external service, instead Tye will use Kubernetes secrets for service discovery rather than environment variables. See our [service discovery documentation](/reference/service_discovery#How-it-works:-Deployed-applications) for in-depth information on why we use secrets instead of environment variables and how they are set.
 
 ### Publish all projects
 
@@ -176,3 +176,5 @@ As shown, all environment variables for service discovery will be part of the De
     key: connectionstring
     name: binding-production-postgres-secret
 ```
+
+

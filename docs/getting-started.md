@@ -43,7 +43,7 @@ Install the [Tye Visual Studio Code extension](https://marketplace.visualstudio.
 
 ## Next steps
 
-1. Once tye is installed, continue to the [Basic Tutorial](/docs/tutorials/hello-tye/00_run_locally.md).
+1. Once tye is installed, continue to the [Basic Tutorial](/tutorials/00_run_locally).
 1. Check out additional samples for more advanced concepts, such as using redis, rabbitmq, and service discovery.
 
 ## Working with CI builds
@@ -74,3 +74,4 @@ If you are using CI builds of Tye we also recommend using CI builds of our libra
   </packageSources>
 </configuration>
 ```
+

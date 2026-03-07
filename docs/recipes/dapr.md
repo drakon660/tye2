@@ -155,7 +155,7 @@ enable or disable the related service.
 
 **:warning: The current Dapr dotnet-sdk release has an issue where its default settings don't work when deployed with mTLS enabled. This will be resolved as part of the upcoming 0.6.0 release. For now you can work around this by disabling mTLS as part of Dapr installation.**
 
-First, you will need a Kubernetes instance to deploy to. The [Basic Tutorial](/docs/tutorials/hello-tye/01_deploy.md) covers some options.
+First, you will need a Kubernetes instance to deploy to. The [Basic Tutorial](/tutorials/01_deploy) covers some options.
 
 Secondly initialize Dapr for your cluster following the instructions [here](https://github.com/dapr/samples/tree/master/2.hello-kubernetes). Make sure to configure redis as both a state store and as pub-sub as described [here](https://github.com/dapr/docs/blob/master/howto/configure-redis/README.md#configuration).
 
@@ -201,3 +201,4 @@ kubectl port-forward svc/store 5000:80
 ```
 
 >:bulb: If you need to see logs using `kubectl logs ...` you need to specify the container name when using Dapr, because there are multiple containers in the pod. Use `-c daprd` for the Dapr sidecar and `-c <projectname>` for the application (ex: `-c store`).
+

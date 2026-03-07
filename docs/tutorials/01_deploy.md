@@ -2,7 +2,7 @@
 
 This tutorial assumes that you have completed the [first step (run locally)](00_run_locally.md)
 
-> :bulb: `tye` will use your current credentials for pushing Docker images and accessing kubernetes clusters. If you have configured kubectl with a context already, that's what [`tye deploy`](/docs/reference/commandline/tye-deploy.md) is going to use!
+> :bulb: `tye` will use your current credentials for pushing Docker images and accessing kubernetes clusters. If you have configured kubectl with a context already, that's what [`tye deploy`](/commandline/tye-deploy.md) is going to use!
 
 Before we deploy, make sure you have the following ready...
 
@@ -116,7 +116,7 @@ Tye has a optional configuration file (`tye.yaml`) to allow customizing settings
 
     `tye.yaml` lists all of the application's services under the `services` node. This is the place for per-service configuration.
 
-    See [schema](/docs/reference/schema.md) for more details about `tye.yaml`.
+    See [schema](/reference/schema) for more details about `tye.yaml`.
 
     > :bulb: We provide a json-schema for `tye.yaml` and some editors support json-schema for completion and validation of yaml files. See [json-schema](/src/schema/README.md) for instructions.
 
@@ -151,3 +151,5 @@ tye undeploy --what-if
 ## Next Steps
 
 Now that you are able to deploy an application to Kubernetes, learn how to add a non-project dependency to tye with [the next step (add Redis)](02_add_redis.md).
+
+
