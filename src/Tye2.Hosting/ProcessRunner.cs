@@ -22,6 +22,7 @@ namespace Tye2.Hosting
     public class ProcessRunner : IApplicationProcessor
     {
         private const string ProcessReplicaStore = "process";
+        private const int MissingFrameworkExitCode = -2147450730;
 
         private readonly ILogger _logger;
         private readonly ProcessRunnerOptions _options;
@@ -256,8 +257,10 @@ namespace Tye2.Hosting
                 }
 
                 var backOff = TimeSpan.FromSeconds(5);
+                var consecutiveFailures = 0;
+                var stopRestarting = false;
 
-                while (!processInfo!.StoppedTokenSource.IsCancellationRequested)
+                while (!processInfo!.StoppedTokenSource.IsCancellationRequested && !stopRestarting)
                 {
                     var replica = serviceName + "_" + Guid.NewGuid().ToString().Substring(0, 10).ToLower();
                     var status = new ProcessStatus(service, replica);
@@ -319,8 +322,9 @@ namespace Tye2.Hosting
                                     _logger.LogInformation("{ServiceName} running on process id {PID}", replica, pid);
                                 }
 
-                                // Reset the backoff
+                                // Reset the backoff and startup failure count after a successful start.
                                 backOff = TimeSpan.FromSeconds(5);
+                                consecutiveFailures = 0;
 
                                 status.Pid = pid;
 
@@ -352,7 +356,26 @@ namespace Tye2.Hosting
                                 }
                                 if (!processInfo.StoppedTokenSource.IsCancellationRequested)
                                 {
-                                    service.Restarts++;
+                                    if (exitCode == 0)
+                                    {
+                                        consecutiveFailures = 0;
+                                    }
+                                    else
+                                    {
+                                        consecutiveFailures++;
+                                        service.Restarts++;
+
+                                        if (IsFatalStartupExitCode(exitCode))
+                                        {
+                                            stopRestarting = true;
+                                            _logger.LogError("{ServiceName} hit fatal startup exit code {ExitCode}. Stopping restart loop.", replica, exitCode);
+                                        }
+                                        else if (!_options.ShouldWatchService(serviceName) && consecutiveFailures >= _options.MaxRestarts)
+                                        {
+                                            stopRestarting = true;
+                                            _logger.LogError("{ServiceName} reached max restart attempts ({MaxRestarts}) after non-zero exits. Stopping restart loop.", replica, _options.MaxRestarts);
+                                        }
+                                    }
                                 }
 
                                 service.Replicas.TryRemove(replica, out var _);
@@ -416,7 +439,15 @@ namespace Tye2.Hosting
                         }
 
                         service.Restarts++;
+                        consecutiveFailures++;
                         service.Replicas.TryRemove(replica, out var _);
+
+                        if (!_options.ShouldWatchService(serviceName) && consecutiveFailures >= _options.MaxRestarts)
+                        {
+                            stopRestarting = true;
+                            _logger.LogError("{ServiceName} reached max restart attempts ({MaxRestarts}) after launch failures. Stopping restart loop.", replica, _options.MaxRestarts);
+                            continue;
+                        }
 
                         try
                         {
@@ -476,6 +507,11 @@ namespace Tye2.Hosting
             }
         }
 
+        private static bool IsFatalStartupExitCode(int exitCode)
+        {
+            // dotnet host fatal startup error (for example missing runtime/framework)
+            return exitCode == MissingFrameworkExitCode;
+        }
         public static async Task RestartService(Service service)
         {
             if (service.Items.TryGetValue(typeof(ProcessInfo), out var stateObj) && stateObj is ProcessInfo state)

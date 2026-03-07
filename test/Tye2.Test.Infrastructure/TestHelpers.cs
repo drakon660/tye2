@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 using Tye2.Core;
 using Tye2.Hosting;
 using Tye2.Hosting.Model;
@@ -123,6 +124,17 @@ namespace Tye2.Test.Infrastructure
                     Interlocked.Decrement(ref remaining);
                 }
 
+
+                if (desiredState == ReplicaState.Started &&
+                    (toChange == null || toChange.Contains(entitySelector(ev))) &&
+                    (ev.State == ReplicaState.Stopped || ev.State == ReplicaState.Removed) &&
+                    ev.Replica is ProcessStatus processStatus &&
+                    processStatus.ExitCode is int exitCode &&
+                    exitCode != 0)
+                {
+                    changedTask.TrySetException(new InvalidOperationException($"Replica '{ev.Replica.Name}' failed to start and exited with code {exitCode}."));
+                    return;
+                }
                 if (remaining == 0)
                 {
                     Task.Delay(waitUntilSuccess)
@@ -137,19 +149,21 @@ namespace Tye2.Test.Infrastructure
             }
 
             var servicesStateObserver = host.Application.Services.Select(srv => srv.Value.ReplicaEvents.Subscribe(OnReplicaChange)).ToList();
+            var lifetime = host.DashboardWebApplication?.Services.GetService(typeof(IHostApplicationLifetime)) as IHostApplicationLifetime;
+            var hostStoppingRegistration = lifetime?.ApplicationStopping.Register(() =>
+                changedTask.TrySetException(new InvalidOperationException("TyeHost stopped before replicas reached desired state.")));
 
             await operation(host);
 
             using var cancellation = new CancellationTokenSource(WaitForServicesTimeout);
             try
             {
-                await using (cancellation.Token.Register(() => changedTask.TrySetCanceled()))
-                {
-                    return await changedTask.Task;
-                }
+                using var cancellationRegistration = cancellation.Token.Register(() => changedTask.TrySetException(new TimeoutException($"Timed out after {WaitForServicesTimeout} waiting for replicas to reach state {desiredState}.")));
+                return await changedTask.Task;
             }
             finally
             {
+                hostStoppingRegistration?.Dispose();
                 foreach (var observer in servicesStateObserver)
                 {
                     observer.Dispose();
@@ -200,19 +214,21 @@ namespace Tye2.Test.Infrastructure
             }
 
             var servicesStateObserver = host.Application.Services.Select(srv => srv.Value.ReplicaEvents.Subscribe(OnReplicaChange)).ToList();
+            var lifetime = host.DashboardWebApplication?.Services.GetService(typeof(IHostApplicationLifetime)) as IHostApplicationLifetime;
+            var hostStoppingRegistration = lifetime?.ApplicationStopping.Register(() =>
+                restartedTask.TrySetException(new InvalidOperationException("TyeHost stopped before replicas completed restart sequence.")));
 
             await operation(host);
 
             using var cancellation = new CancellationTokenSource(WaitForServicesTimeout);
             try
             {
-                await using (cancellation.Token.Register(() => restartedTask.TrySetCanceled()))
-                {
-                    return await restartedTask.Task;
-                }
+                using var cancellationRegistration = cancellation.Token.Register(() => restartedTask.TrySetException(new TimeoutException($"Timed out after {WaitForServicesTimeout} waiting for replicas to restart.")));
+                return await restartedTask.Task;
             }
             finally
             {
+                hostStoppingRegistration?.Dispose();
                 foreach (var observer in servicesStateObserver)
                 {
                     observer.Dispose();
@@ -261,3 +277,15 @@ namespace Tye2.Test.Infrastructure
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
