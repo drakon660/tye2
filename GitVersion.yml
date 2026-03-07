@@ -1,4 +1,12 @@
-mode: Mainline
+workflow: GitHubFlow/v1
+strategies:
+  - Fallback
+  - ConfiguredNextVersion
+  - MergeMessage
+  - TaggedCommit
+  - TrackReleaseBranches
+  - VersionInBranchName
+  - Mainline
 branches: {}
 ignore:
   sha: []

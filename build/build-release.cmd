@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal EnableExtensions
 
 set "SCRIPT_DIR=%~dp0"
 set "REPO_ROOT=%SCRIPT_DIR%.."
@@ -30,27 +30,10 @@ echo Restoring solution...
 dotnet restore "tye2.sln" || goto :fail
 
 echo Calculating version with GitVersion...
-for /f "delims=" %%i in ('dotnet-gitversion /showvariable AssemblySemVer') do set "ASSEMBLY_SEMVER=%%i"
-for /f "delims=" %%i in ('dotnet-gitversion /showvariable AssemblySemFileVer') do set "ASSEMBLY_FILEVER=%%i"
-for /f "delims=" %%i in ('dotnet-gitversion /showvariable SemVer') do set "NUGET_VERSION=%%i"
-for /f "delims=" %%i in ('dotnet-gitversion /showvariable InformationalVersion') do set "INFO_VERSION=%%i"
-
-if "%ASSEMBLY_SEMVER%"=="" (
-  echo ERROR: Failed to resolve AssemblySemVer from GitVersion.
-  goto :fail
-)
-if "%ASSEMBLY_FILEVER%"=="" (
-  echo ERROR: Failed to resolve AssemblySemFileVer from GitVersion.
-  goto :fail
-)
-if "%NUGET_VERSION%"=="" (
-  echo ERROR: Failed to resolve SemVer from GitVersion.
-  goto :fail
-)
-if "%INFO_VERSION%"=="" (
-  echo ERROR: Failed to resolve InformationalVersion from GitVersion.
-  goto :fail
-)
+call :get_gitversion_var AssemblySemVer ASSEMBLY_SEMVER || goto :fail
+call :get_gitversion_var AssemblySemFileVer ASSEMBLY_FILEVER || goto :fail
+call :get_gitversion_var SemVer NUGET_VERSION || goto :fail
+call :get_gitversion_var InformationalVersion INFO_VERSION || goto :fail
 
 echo Version: %NUGET_VERSION%
 echo Publishing tye2 in Release mode...
@@ -62,6 +45,30 @@ dotnet publish "%PROJECT%" -c Release -o "%OUTPUT%" --nologo ^
 
 popd
 echo Build completed. Output: %OUTPUT%
+exit /b 0
+
+:get_gitversion_var
+set "GV_NAME=%~1"
+set "GV_TARGET=%~2"
+set "GV_TMP=%TEMP%\gitversion_%RANDOM%%RANDOM%.txt"
+
+dotnet-gitversion /showvariable %GV_NAME% > "%GV_TMP%" 2>&1
+if errorlevel 1 (
+  echo ERROR: GitVersion failed while resolving %GV_NAME%.
+  type "%GV_TMP%"
+  del /q "%GV_TMP%" >nul 2>nul
+  exit /b 1
+)
+
+set /p GV_VALUE=<"%GV_TMP%"
+del /q "%GV_TMP%" >nul 2>nul
+
+if "%GV_VALUE%"=="" (
+  echo ERROR: GitVersion returned an empty value for %GV_NAME%.
+  exit /b 1
+)
+
+set "%GV_TARGET%=%GV_VALUE%"
 exit /b 0
 
 :fail

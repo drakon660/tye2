@@ -22,21 +22,33 @@ if ! command -v dotnet-gitversion >/dev/null 2>&1; then
   exit 1
 fi
 
+get_gitversion_var() {
+  local name="$1"
+  local value
+
+  if ! value="$(dotnet-gitversion /showvariable "$name")"; then
+    echo "ERROR: GitVersion failed while resolving $name." >&2
+    exit 1
+  fi
+
+  if [[ -z "$value" ]]; then
+    echo "ERROR: GitVersion returned an empty value for $name." >&2
+    exit 1
+  fi
+
+  printf '%s' "$value"
+}
+
 cd "$REPO_ROOT"
 
 echo "Restoring solution..."
 dotnet restore "tye2.sln"
 
 echo "Calculating version with GitVersion..."
-ASSEMBLY_SEMVER="$(dotnet-gitversion /showvariable AssemblySemVer)"
-ASSEMBLY_FILEVER="$(dotnet-gitversion /showvariable AssemblySemFileVer)"
-NUGET_VERSION="$(dotnet-gitversion /showvariable SemVer)"
-INFO_VERSION="$(dotnet-gitversion /showvariable InformationalVersion)"
-
-if [[ -z "$ASSEMBLY_SEMVER" || -z "$ASSEMBLY_FILEVER" || -z "$NUGET_VERSION" || -z "$INFO_VERSION" ]]; then
-  echo "ERROR: GitVersion did not return expected values." >&2
-  exit 1
-fi
+ASSEMBLY_SEMVER="$(get_gitversion_var AssemblySemVer)"
+ASSEMBLY_FILEVER="$(get_gitversion_var AssemblySemFileVer)"
+NUGET_VERSION="$(get_gitversion_var SemVer)"
+INFO_VERSION="$(get_gitversion_var InformationalVersion)"
 
 echo "Version: $NUGET_VERSION"
 echo "Publishing tye2 in Release mode..."
@@ -47,4 +59,3 @@ dotnet publish "$PROJECT" -c Release -o "$OUTPUT" --nologo \
   -p:Version="$NUGET_VERSION"
 
 echo "Build completed. Output: $OUTPUT"
-
