@@ -16,12 +16,33 @@ if ! command -v dotnet >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! command -v dotnet-gitversion >/dev/null 2>&1; then
+  echo "ERROR: dotnet-gitversion not found in PATH." >&2
+  echo "Install with: dotnet tool install --global GitVersion.Tool" >&2
+  exit 1
+fi
+
 cd "$REPO_ROOT"
 
 echo "Restoring solution..."
 dotnet restore "tye2.sln"
 
+echo "Calculating version with GitVersion..."
+ASSEMBLY_SEMVER="$(dotnet-gitversion /showvariable AssemblySemVer)"
+ASSEMBLY_FILEVER="$(dotnet-gitversion /showvariable AssemblySemFileVer)"
+NUGET_VERSION="$(dotnet-gitversion /showvariable NuGetVersionV2)"
+
+if [[ -z "$ASSEMBLY_SEMVER" || -z "$ASSEMBLY_FILEVER" || -z "$NUGET_VERSION" ]]; then
+  echo "ERROR: GitVersion did not return expected values." >&2
+  exit 1
+fi
+
+echo "Version: $NUGET_VERSION"
 echo "Publishing tye2 in Release mode..."
-dotnet publish "$PROJECT" -c Release -o "$OUTPUT" --nologo
+dotnet publish "$PROJECT" -c Release -o "$OUTPUT" --nologo \
+  -p:AssemblyVersion="$ASSEMBLY_SEMVER" \
+  -p:FileVersion="$ASSEMBLY_FILEVER" \
+  -p:InformationalVersion="$NUGET_VERSION" \
+  -p:Version="$NUGET_VERSION"
 
 echo "Build completed. Output: $OUTPUT"
