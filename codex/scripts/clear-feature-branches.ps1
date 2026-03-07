@@ -1,7 +1,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$Remote = "origin",
-    [string[]]$Patterns = @("feature/*", "codex/feature/*"),
+    [string[]]$Patterns = @("feature/*"),
     [string[]]$ProtectedBranches = @("main", "master", "develop", "dev"),
     [switch]$SkipFetch,
     [switch]$SkipLocal,
@@ -116,3 +116,4 @@ if (-not $SkipRemote) {
 }
 
 Write-Host "Feature branch cleanup complete."
+
