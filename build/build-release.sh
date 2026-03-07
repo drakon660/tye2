@@ -30,9 +30,10 @@ dotnet restore "tye2.sln"
 echo "Calculating version with GitVersion..."
 ASSEMBLY_SEMVER="$(dotnet-gitversion /showvariable AssemblySemVer)"
 ASSEMBLY_FILEVER="$(dotnet-gitversion /showvariable AssemblySemFileVer)"
-NUGET_VERSION="$(dotnet-gitversion /showvariable NuGetVersionV2)"
+NUGET_VERSION="$(dotnet-gitversion /showvariable SemVer)"
+INFO_VERSION="$(dotnet-gitversion /showvariable InformationalVersion)"
 
-if [[ -z "$ASSEMBLY_SEMVER" || -z "$ASSEMBLY_FILEVER" || -z "$NUGET_VERSION" ]]; then
+if [[ -z "$ASSEMBLY_SEMVER" || -z "$ASSEMBLY_FILEVER" || -z "$NUGET_VERSION" || -z "$INFO_VERSION" ]]; then
   echo "ERROR: GitVersion did not return expected values." >&2
   exit 1
 fi
@@ -42,7 +43,8 @@ echo "Publishing tye2 in Release mode..."
 dotnet publish "$PROJECT" -c Release -o "$OUTPUT" --nologo \
   -p:AssemblyVersion="$ASSEMBLY_SEMVER" \
   -p:FileVersion="$ASSEMBLY_FILEVER" \
-  -p:InformationalVersion="$NUGET_VERSION" \
+  -p:InformationalVersion="$INFO_VERSION" \
   -p:Version="$NUGET_VERSION"
 
 echo "Build completed. Output: $OUTPUT"
+

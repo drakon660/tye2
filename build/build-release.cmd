@@ -32,7 +32,8 @@ dotnet restore "tye2.sln" || goto :fail
 echo Calculating version with GitVersion...
 for /f "delims=" %%i in ('dotnet-gitversion /showvariable AssemblySemVer') do set "ASSEMBLY_SEMVER=%%i"
 for /f "delims=" %%i in ('dotnet-gitversion /showvariable AssemblySemFileVer') do set "ASSEMBLY_FILEVER=%%i"
-for /f "delims=" %%i in ('dotnet-gitversion /showvariable NuGetVersionV2') do set "NUGET_VERSION=%%i"
+for /f "delims=" %%i in ('dotnet-gitversion /showvariable SemVer') do set "NUGET_VERSION=%%i"
+for /f "delims=" %%i in ('dotnet-gitversion /showvariable InformationalVersion') do set "INFO_VERSION=%%i"
 
 if "%ASSEMBLY_SEMVER%"=="" (
   echo ERROR: Failed to resolve AssemblySemVer from GitVersion.
@@ -43,7 +44,11 @@ if "%ASSEMBLY_FILEVER%"=="" (
   goto :fail
 )
 if "%NUGET_VERSION%"=="" (
-  echo ERROR: Failed to resolve NuGetVersionV2 from GitVersion.
+  echo ERROR: Failed to resolve SemVer from GitVersion.
+  goto :fail
+)
+if "%INFO_VERSION%"=="" (
+  echo ERROR: Failed to resolve InformationalVersion from GitVersion.
   goto :fail
 )
 
@@ -52,7 +57,7 @@ echo Publishing tye2 in Release mode...
 dotnet publish "%PROJECT%" -c Release -o "%OUTPUT%" --nologo ^
   -p:AssemblyVersion=%ASSEMBLY_SEMVER% ^
   -p:FileVersion=%ASSEMBLY_FILEVER% ^
-  -p:InformationalVersion=%NUGET_VERSION% ^
+  -p:InformationalVersion=%INFO_VERSION% ^
   -p:Version=%NUGET_VERSION% || goto :fail
 
 popd
