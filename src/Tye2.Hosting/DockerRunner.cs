@@ -42,6 +42,16 @@ namespace Tye2.Hosting
         public async Task StartAsync(Application application)
         {
             var contextLabel = CreateContextLabel(application.ContextDirectory);
+
+            if (application.ContainerEngine.IsUsable(out var unusableReason))
+            {
+                await PurgeFromPreviousRun(application, contextLabel);
+            }
+            else
+            {
+                _logger.LogWarning("Skipping docker stale-resource purge because container engine is unavailable: {Reason}", unusableReason);
+            }
+
             var runId = Guid.NewGuid().ToString("N").Substring(0, 12);
 
             var containers = new List<Service>();
@@ -58,8 +68,6 @@ namespace Tye2.Hosting
             {
                 return;
             }
-
-            await PurgeFromPreviousRun(application, contextLabel);
 
             var proxies = new List<Service>();
             foreach (var service in application.Services.Values)
@@ -725,4 +733,5 @@ namespace Tye2.Hosting
         }
     }
 }
+
 
