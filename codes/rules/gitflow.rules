@@ -1,0 +1,81 @@
+GIT FLOW RULES
+
+1. Naming format
+- Use lowercase letters and hyphens.
+- Keep names concise and descriptive.
+- Use only: a-z, 0-9, hyphen (-), and slash (/).
+- Do not use spaces, underscores, punctuation, or special characters.
+- Do not use consecutive hyphens ("--").
+- Do not end branch names with a hyphen.
+
+2. Allowed branch prefixes
+- feature/   : new functionality
+- bugfix/    : non-critical bug fixes
+- hotfix/    : critical production fixes
+- release/   : release preparation
+- docs/      : documentation changes
+
+3. Pattern
+- <prefix>/<short-description>
+
+4. Examples
+- feature/login-system
+- bugfix/header-styling
+- hotfix/critical-security-issue
+- release/1.0.1
+- docs/api-endpoints
+
+5. Release versioning
+- Use Semantic Versioning: MAJOR.MINOR.PATCH.
+- Release branch names must use dotted versions: release/1.2.0.
+- Do not use hyphenated numeric versions for releases (for example, release/1-2-0).
+
+6. Pre-release rules
+- Pre-releases must append a label and numeric counter to a valid SemVer base.
+- Allowed labels: alpha, beta, rc.
+- Format: <major>.<minor>.<patch>-<label>.<number>
+- Valid examples:
+  - 1.3.0-alpha.1
+  - 1.3.0-beta.2
+  - 1.3.0-rc.1
+- Pre-release branch examples:
+  - release/1.3.0-rc.1
+  - release/2.0.0-beta.1
+
+7. Source and target branch rules
+- feature/* branches must be created from develop and merged back into develop.
+- release/* branches must be created from develop and merged into both main and develop.
+- hotfix/* branches must be created from main and merged into both main and develop.
+
+8. Branch lifecycle rules
+- One branch should map to one issue/task.
+- Delete feature, release, and hotfix branches after merge.
+- Keep release and hotfix branches short-lived.
+
+9. Merge policy
+- Direct commits to main and develop are not allowed.
+- All changes must go through a pull request.
+- At least one reviewer approval is required before merge.
+- Use one merge strategy consistently across the repo (squash or merge commit).
+
+10. Quality gates
+- Build must pass before merge.
+- Automated tests must pass before merge.
+- No high-severity lint or security issues are allowed at merge time.
+
+11. Commit and PR conventions
+- Use Conventional Commits (feat:, fix:, chore:, docs:, refactor:, test:).
+- Include issue/ticket ID in commit message or PR title when available.
+
+12. Tagging rules
+- Final release tags are created from main only and must follow: v<major>.<minor>.<patch>.
+- Pre-release tags must follow: v<major>.<minor>.<patch>-<label>.<number>.
+
+13. Invalid examples
+- Feature/New-Login            (uppercase)
+- feature/new_login            (underscore)
+- feature//new-login           (double slash)
+- feature/new--login           (double hyphen)
+- feature/new-login-           (trailing hyphen)
+- release/1-2-0                (hyphenated release version)
+- release/1.2.0-preview.1      (unsupported pre-release label)
