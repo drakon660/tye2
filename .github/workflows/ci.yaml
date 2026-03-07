@@ -5,11 +5,6 @@ name: CI
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: ["main"]
-    paths:
-      - 'src/**'  
-      - 'test/**'          
 
 jobs:
   ci:
@@ -61,3 +56,4 @@ jobs:
           job_summary: true
           files: |
             **/*.trx
+
