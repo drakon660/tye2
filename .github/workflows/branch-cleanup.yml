@@ -33,7 +33,7 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const prefixes = ["feature/", "bugfix/", "hotfix/"];
+            const prefixes = ["feature/", "bugfix/", "hotfix/", "codex/feature/", "codex/bugfix/", "codex/hotfix/"];
             const dryRun = String(process.env.DRY_RUN).toLowerCase() === "true";
             const minDays = Number.parseInt(process.env.MIN_DAYS ?? "7", 10);
             const now = new Date();
@@ -149,4 +149,5 @@ jobs:
             }
 
             await core.summary.write();
+
 
