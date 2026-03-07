@@ -11,6 +11,7 @@ namespace Tye2.Hosting
     public class ProcessRunnerOptions
     {
         public const string AllServices = "*";
+        public const int DefaultMaxRestarts = 5;
 
         public bool BuildProjects { get; set; }
 
@@ -25,6 +26,9 @@ namespace Tye2.Hosting
         public string[]? ServicesToWatch { get; set; }
         public bool WatchAllServices { get; set; }
         public bool ShouldWatchService(string serviceName) => WatchMode && (WatchAllServices || ServicesToWatch!.Contains(serviceName, StringComparer.OrdinalIgnoreCase));
+
+        // Prevent endless restart loops for unrecoverable startup failures.
+        public int MaxRestarts { get; set; } = DefaultMaxRestarts;
 
         public static ProcessRunnerOptions FromHostOptions(HostOptions options)
         {
@@ -41,6 +45,7 @@ namespace Tye2.Hosting
                 WatchAllServices = options.Watch?.Contains(AllServices, StringComparer.OrdinalIgnoreCase) ?? false,
                 ManualStartServices = options.NoStart?.Contains(AllServices, StringComparer.OrdinalIgnoreCase) ?? false,
                 ServicesNotToStart = options.NoStart?.ToArray(),
+                MaxRestarts = DefaultMaxRestarts,
             };
         }
     }
