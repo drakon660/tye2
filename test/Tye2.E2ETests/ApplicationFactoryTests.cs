@@ -161,7 +161,7 @@ services:
 
             var containsTargetFramework = ((DotnetProjectServiceBuilder)service).BuildProperties.TryGetValue("TargetFramework", out var targetFramework);
             Assert.True(containsTargetFramework);
-            Assert.Equal("net7.0", targetFramework);
+            Assert.Equal("net8.0", targetFramework);
         }
 
         [Fact]
@@ -173,7 +173,7 @@ services:
             // Debug targets can be null if not specified, so make sure calling host.Start does not throw.
             var outputContext = new OutputContext(_sink, Verbosity.Debug);
             var projectFile = new FileInfo(yamlFile);
-            var applicationBuilder = await ApplicationFactory.CreateAsync(outputContext, projectFile, "net7.0");
+            var applicationBuilder = await ApplicationFactory.CreateAsync(outputContext, projectFile, "net8.0");
 
             Assert.Single(applicationBuilder.Services);
             var service = applicationBuilder.Services.Single(s => s.Name == "test-project");
