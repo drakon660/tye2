@@ -36,6 +36,7 @@ namespace Frontend
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddHealthChecks();
+            services.AddHttpLogging(o => { });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
