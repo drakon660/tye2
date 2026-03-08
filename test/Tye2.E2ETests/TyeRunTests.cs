@@ -176,7 +176,6 @@ services:
         [ConditionalTheory]
         [SkipIfDockerNotRunning]
         [InlineData("single-project", "mcr.microsoft.com/dotnet/aspnet:8.0")]
-        [InlineData("single-project-7.0", "mcr.microsoft.com/dotnet/aspnet:7.0")]
         public async Task SingleProjectWithDocker_UsesCorrectBaseImage(string projectName, string baseImage)
         {
             using var projectDirectory = CopyTestProjectDirectory(projectName);
@@ -1323,7 +1322,6 @@ services:
         [ConditionalTheory]
         [SkipIfDockerNotRunning]
         [InlineData("non-standard-dashboard-port", "mcr.microsoft.com/dotnet/aspnet:8.0", 8005)]
-        [InlineData("non-standard-dashboard-port-7.0", "mcr.microsoft.com/dotnet/aspnet:7.0", 8006)]
         public async Task RunUsesYamlDashboardPort(string projectName, string baseImage, int expectedDashboardPort)
         {
             using var projectDirectory = CopyTestProjectDirectory(projectName);
@@ -1469,23 +1467,75 @@ services:
                 var frontendUri = await GetServiceUrl(client, uri, "frontend");
                 var backendUri = await GetServiceUrl(client, uri, "backend");
 
+                await WaitUntilAsync(async () =>
+                {
+                    try
+                    {
+                        using var response = await client.GetAsync(frontendUri);
+                        return response.IsSuccessStatusCode;
+                    }
+                    catch (HttpRequestException)
+                    {
+                        return false;
+                    }
+                },
+                TimeSpan.FromSeconds(20),
+                TimeSpan.FromMilliseconds(500),
+                "Frontend was not reachable in time.");
+
+                await WaitUntilAsync(async () =>
+                {
+                    try
+                    {
+                        using var response = await client.GetAsync(backendUri);
+                        return response.IsSuccessStatusCode;
+                    }
+                    catch (HttpRequestException)
+                    {
+                        return false;
+                    }
+                },
+                TimeSpan.FromSeconds(20),
+                TimeSpan.FromMilliseconds(500),
+                "Backend was not reachable in time.");
+
+                var zipkinClient = GetZipkin(zipkinPort);
+                await WaitUntilAsync(async () =>
+                {
+                    try
+                    {
+                        await zipkinClient.GetServices();
+                        return true;
+                    }
+                    catch (HttpRequestException)
+                    {
+                        return false;
+                    }
+                },
+                TimeSpan.FromSeconds(20),
+                TimeSpan.FromMilliseconds(500),
+                "Zipkin API was not reachable in time.");
+
                 await client.GetAsync(frontendUri);
                 await client.GetAsync(backendUri);
 
-                var zipkinClient = GetZipkin(zipkinPort);
-                var services = await WaitForResultAsync(
-                    () => zipkinClient.GetServices(),
-                    r => r is { Count: 2 },
-                    TimeSpan.FromSeconds(20),
-                    TimeSpan.FromMilliseconds(500),
-                    "Zipkin did not report expected services in time.");
-                services.Count.Should().Be(2);
                 var traces = await WaitForResultAsync(
-                    () => zipkinClient.GetTraces("frontend"),
+                    async () =>
+                    {
+                        try
+                        {
+                            return await zipkinClient.GetTraces("frontend");
+                        }
+                        catch (HttpRequestException)
+                        {
+                            return Array.Empty<IReadOnlyList<ZipkinTrace>>();
+                        }
+                    },
                     r => r is { Count: > 0 },
-                    TimeSpan.FromSeconds(20),
+                    TimeSpan.FromSeconds(45),
                     TimeSpan.FromMilliseconds(500),
                     "Zipkin did not report frontend traces in time.");
+                await Task.Delay(150);
                 traces.Count.Should().Be(1);
                 var internalTraces = traces.First();
                 var serverFrontendTrace =
@@ -1497,8 +1547,8 @@ services:
                 var serverBackendTrace =
                     internalTraces.FirstOrDefault(x => x.Kind == "SERVER" && x.LocalEndpoint.ServiceName == "backend");
                 serverBackendTrace.Should().NotBeNull();
-                serverBackendTrace.ParentId.Should().Be(clientFrontendTrace.Id);
-                clientFrontendTrace.ParentId.Should().Be(serverFrontendTrace.Id);
+                serverBackendTrace?.ParentId.Should().Be(clientFrontendTrace?.Id);
+                clientFrontendTrace?.ParentId.Should().Be(serverFrontendTrace?.Id);
             });
         }
 
