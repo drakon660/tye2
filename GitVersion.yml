@@ -13,14 +13,19 @@ branches:
   main:
     increment: None
   feature:
+    regex: '^features?[/-]'
     increment: None
   bugfix:
+    regex: '^bugfix(es)?[/-]'
     increment: None
   hotfix:
+    regex: '^hotfix(es)?[/-]'
     increment: None
   release:
+    regex: '^releases?[/-]'
     increment: None
   pull-request:
+    regex: '^(pull|pull-requests|pr)[/-]'
     increment: None
 ignore:
   sha: []
