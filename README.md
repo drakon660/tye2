@@ -1,6 +1,14 @@
 # Session Summary
 
-Session date: 2026-03-07
+## 2026-03-08
+
+Completed work in this session:
+
+- Audited the full solution for obsolete `.NET 7` targets and related references.
+- Updated documentation to set `.NET 8` as the minimum supported version.
+- Updated CI workflow to remove `.NET 6/.NET 7` setup and keep `.NET 8` only.
+
+## 2026-03-07
 
 Completed work in this session:
 
@@ -14,4 +22,3 @@ Completed work in this session:
 - Added Docker labels for Tye2-managed containers/networks.
 - Added startup cleanup for stale Docker containers/networks scoped to the current project context.
 - Added E2E test teardown cleanup to remove Tye2-managed Docker resources after test runs.
-
