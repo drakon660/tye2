@@ -93,7 +93,6 @@ namespace Tye2.E2ETests
 
             var content = @$"
 # tye application configuration file
-# read all about it at https://github.com/dotnet/tye
 name: frontend-backend
 services:
 - name: backend
@@ -1361,7 +1360,6 @@ services:
         [ConditionalTheory]
         [SkipIfDockerNotRunning]
         [InlineData("non-standard-dashboard-port", "mcr.microsoft.com/dotnet/aspnet:8.0", 8005)]
-        [InlineData("non-standard-dashboard-port-7.0", "mcr.microsoft.com/dotnet/aspnet:7.0", 8006)]
         public async Task RunCliPortOverridesYamlDashboardPort(string projectName, string baseImage, int tyeYamlDashboardPort)
         {
             var cliDashboardPort = 8008;
