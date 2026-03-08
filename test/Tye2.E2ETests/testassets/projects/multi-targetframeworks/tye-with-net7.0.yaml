@@ -1,4 +1,4 @@
-﻿# tye application configuration file
+# tye application configuration file
 # read all about it at https://github.com/dotnet/tye
 name: multi-targetframeworks
 services:
@@ -6,4 +6,5 @@ services:
   project: multi-targetframeworks/multi-targetframeworks.csproj
   buildProperties:
     - name: TargetFramework
-      value: net7.0
+      value: net8.0
+
