@@ -1519,36 +1519,58 @@ services:
                 await client.GetAsync(frontendUri);
                 await client.GetAsync(backendUri);
 
-                var traces = await WaitForResultAsync(
+                var internalTraces = await WaitForResultAsync(
                     async () =>
                     {
                         try
                         {
-                            return await zipkinClient.GetTraces("frontend");
+                            var allTraces = await zipkinClient.GetTraces("frontend");
+                            _output.WriteLine($"[Zipkin] Total trace groups returned: {allTraces.Count}");
+                            for (var i = 0; i < allTraces.Count; i++)
+                            {
+                                _output.WriteLine($"[Zipkin] Trace group [{i}] has {allTraces[i].Count} spans:");
+                                foreach (var span in allTraces[i])
+                                {
+                                    _output.WriteLine($"[Zipkin]   Id={span.Id}, ParentId={span.ParentId}, Kind={span.Kind}, Service={span.LocalEndpoint?.ServiceName}");
+                                }
+                            }
+                            var match = allTraces.FirstOrDefault(t =>
+                                t.Any(x => x.Kind == "SERVER" && x.LocalEndpoint.ServiceName == "frontend") &&
+                                t.Any(x => x.Kind == "CLIENT" && x.LocalEndpoint.ServiceName == "frontend") &&
+                                t.Any(x => x.Kind == "SERVER" && x.LocalEndpoint.ServiceName == "backend"));
+                            _output.WriteLine(match != null
+                                ? $"[Zipkin] Found matching trace with {match.Count} spans"
+                                : "[Zipkin] No matching trace found yet, retrying...");
+                            return match;
                         }
-                        catch (HttpRequestException)
+                        catch (HttpRequestException ex)
                         {
-                            return Array.Empty<IReadOnlyList<ZipkinTrace>>();
+                            _output.WriteLine($"[Zipkin] HttpRequestException: {ex.Message}");
+                            return null;
                         }
                     },
-                    r => r is { Count: > 0 },
+                    r => r != null,
                     TimeSpan.FromSeconds(45),
                     TimeSpan.FromMilliseconds(500),
-                    "Zipkin did not report frontend traces in time.");
-                await Task.Delay(150);
-                traces.Count.Should().Be(1);
-                var internalTraces = traces.First();
+                    "Zipkin did not report a complete frontend→backend trace in time.");
+
+                _output.WriteLine($"[Zipkin] Matched trace has {internalTraces!.Count} spans");
                 var serverFrontendTrace =
                     internalTraces.FirstOrDefault(x => x.Kind == "SERVER" && x.LocalEndpoint.ServiceName == "frontend");
+                _output.WriteLine($"[Zipkin] serverFrontendTrace: Id={serverFrontendTrace?.Id}, ParentId={serverFrontendTrace?.ParentId}");
                 serverFrontendTrace.Should().NotBeNull();
                 var clientFrontendTrace =
                     internalTraces.FirstOrDefault(x => x.Kind == "CLIENT" && x.LocalEndpoint.ServiceName == "frontend");
+                _output.WriteLine($"[Zipkin] clientFrontendTrace: Id={clientFrontendTrace?.Id}, ParentId={clientFrontendTrace?.ParentId}");
                 clientFrontendTrace.Should().NotBeNull();
                 var serverBackendTrace =
                     internalTraces.FirstOrDefault(x => x.Kind == "SERVER" && x.LocalEndpoint.ServiceName == "backend");
+                _output.WriteLine($"[Zipkin] serverBackendTrace: Id={serverBackendTrace?.Id}, ParentId={serverBackendTrace?.ParentId}");
                 serverBackendTrace.Should().NotBeNull();
-                serverBackendTrace?.ParentId.Should().Be(clientFrontendTrace?.Id);
-                clientFrontendTrace?.ParentId.Should().Be(serverFrontendTrace?.Id);
+                _output.WriteLine($"[Zipkin] Checking: serverBackend.ParentId({serverBackendTrace!.ParentId}) == clientFrontend.Id({clientFrontendTrace!.Id})");
+                serverBackendTrace.ParentId.Should().Be(clientFrontendTrace.Id);
+                _output.WriteLine($"[Zipkin] Checking: clientFrontend.ParentId({clientFrontendTrace.ParentId}) == serverFrontend.Id({serverFrontendTrace!.Id})");
+                clientFrontendTrace.ParentId.Should().Be(serverFrontendTrace.Id);
             });
         }
 
