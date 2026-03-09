@@ -38,17 +38,6 @@ namespace Tye2.Core.Serialization
             {
                 _yamlStream.Load(_reader);
             }
-            catch (SemanticErrorException ex)
-            {
-                var message = $"YAML semantic error at Line {ex.Start.Line}, Col {ex.Start.Column} to Line {ex.End.Line}, Col {ex.End.Column}: {ex.Message}";
-
-                if (_fileInfo != null)
-                {
-                    throw new TyeYamlException(ex.Start, $"Unable to parse '{_fileInfo.Name}'. {message}", ex, _fileInfo);
-                }
-
-                throw new TyeYamlException(ex.Start, message, ex);
-            }
             catch (YamlException ex)
             {
                 if (_fileInfo != null)
