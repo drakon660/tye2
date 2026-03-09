@@ -61,6 +61,16 @@ If you don't know what a pull request is read this article: https://help.github.
 
 Familiarize yourself with the [developer guide](/docs/developer_guide.md) for information about how to work with the repository.
 
+
+#### Branch strategy (Git Flow)
+
+Use `develop` as the default integration branch.
+
+- Create `feature/*` and `bugfix/*` branches from `develop`.
+- Open pull requests targeting `develop`.
+- Use `main` for releases and production-ready history.
+- Merge to `main` through release/hotfix flow only.
+
 ### Tests
 
 Tye is a new project with lots of aspects that are difficult to test. We don't currently have many tests as part of the repository and expect to increase the test coverage over time. For right now, try to understand if the area you're working in is already covered by tests, and expand them if possible.
