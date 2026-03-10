@@ -3,14 +3,15 @@
 ## Current State
 
 ### Test Projects
-- **Tye2.UnitTests** — 523 tests across 31 test files (up from 5 files originally)
+- **Tye2.UnitTests** — 589 tests across 36 test files (up from 5 files originally)
 - **Tye2.E2ETests** — 14+ integration tests (require Docker, slow)
 - **Tye2.Extensions.Configuration.Tests** — configuration extension tests
 
 ### Progress
 Phase 1 (Critical) from the original analysis is now **fully covered**. All 6 critical components have comprehensive unit tests.
 Phase 2 (Runtime Infrastructure) partially covered: PortAssigner, ReplicaRegistry.
-Phase 3 (Utilities) partially covered: ArgumentEscaper, NameInferer, ConfigFileFinder.
+Phase 3 (Extensions) partially covered: Zipkin, Seq, Elastic, DiagnosticAgent.
+Phase 4 (Utilities) partially covered: ArgumentEscaper, NameInferer, ConfigFileFinder, OutputContext.
 
 ---
 
@@ -32,10 +33,20 @@ Phase 3 (Utilities) partially covered: ArgumentEscaper, NameInferer, ConfigFileF
 | PortAssigner | `PortAssignerTests.cs` | 15 | Skip without RunInfo, auto-assign ports, preserve existing, replica mapping, readiness proxy, HTTP/HTTPS container port defaults, multiple bindings/services, edge cases |
 | ReplicaRegistry | `ReplicaRegistryTests.cs` | 17 | Write/read/delete events, JSON serialization, separate stores, dispose cleanup, roundtrip, concurrent writes |
 
-## Covered — Utilities (Phase 3 partial)
+## Covered — Extensions (Phase 3 partial)
 
 | Component | Test File(s) | Tests | Coverage |
 |-----------|-------------|-------|----------|
+| Zipkin extension | `ZipkinExtensionTests.cs` | 11 | Service injection (container, image, binding, port), dependency wiring, duplicate detection, trace provider config, deploy sidecar |
+| Seq extension | `SeqExtensionTests.cs` | 12 | Service injection (container, image, binding, env var), logPath volume, dependency wiring, duplicate detection, logging provider, deploy sidecar |
+| Elastic extension | `ElasticStackExtensionTests.cs` | 14 | Service injection (container, image, kibana+http bindings), logPath volume, dependency wiring, duplicate detection, logging provider, deploy sidecar + kibana binding removal |
+| DiagnosticAgent | `DiagnosticAgentTests.cs` | 10 | GetOrAddSidecar (name, image, args, relocate diagnostics), idempotent add, existing sidecar reuse |
+
+## Covered — Utilities (Phase 4 partial)
+
+| Component | Test File(s) | Tests | Coverage |
+|-----------|-------------|-------|----------|
+| OutputContext | `OutputContextTests.cs` | 19 | WriteInfoLine/WriteDebugLine/WriteAlwaysLine verbosity filtering, WriteCommandLine, BeginStep/EndStep indentation, nested steps, StepTracker lifecycle, CapturedCommandOutput stdout/stderr, constructor validation |
 | ArgumentEscaper | `ArgumentEscaperTests.cs` | 17 | Simple args, whitespace quoting, backslash escaping, embedded quotes, already-quoted strings, mixed args, real-world examples |
 | NameInferer | `NameInfererTests.cs` | 9 | .sln/.csproj/.fsproj name extraction, YAML directory fallback, case normalization, null input |
 | ConfigFileFinder | `ConfigFileFinderTests.cs` | 14 | tye.yaml/yml, docker-compose, .csproj/.fsproj/.sln, priority order, empty dir, multiple matches, custom formats |
@@ -65,17 +76,14 @@ Phase 3 (Utilities) partially covered: ArgumentEscaper, NameInferer, ConfigFileF
 | HttpProxyService | `src/Tye2.Hosting/HttpProxyService.cs` | ~300 | Hard — HTTP proxy, load balancing |
 | TyeHost | `src/Tye2.Hosting/TyeHost.cs` | ~200 | Hard — orchestrates startup/shutdown of all services |
 
-### Medium Priority — Extensions (untested)
+### Medium Priority — Extensions (partially tested)
 
 | Component | File(s) | Status |
 |-----------|---------|--------|
-| Dapr extension | `src/Tye2.Extensions/Dapr/DaprExtension.cs` | Zero tests |
-| Zipkin extension | `src/Tye2.Extensions/Zipkin/ZipkinExtension.cs` | Zero tests |
-| Seq extension | `src/Tye2.Extensions/Seq/SeqExtensions.cs` | Zero tests |
-| Elastic extension | `src/Tye2.Extensions/Elastic/ElasticStackExtension.cs` | Zero tests |
-| Extension framework | `src/Tye2.Core/Extension.cs`, `ExtensionContext.cs` | Zero tests |
-| File watching | `src/Tye2.Hosting/Watch/` (4 files, ~600 lines) | Zero tests |
-| Diagnostics | `src/Tye2.Hosting.Diagnostics/` (5 files, ~300 lines) | Zero tests |
+| Dapr extension | `src/Tye2.Extensions/Dapr/DaprExtension.cs` | Untested — largest extension (~390 lines), has process dependency (VerifyDaprInitialized) |
+| DaprExtensionConfigurationReader | `src/Tye2.Extensions/Dapr/DaprExtensionConfigurationReader.cs` | Untested — pure config parsing logic, easy to test |
+| File watching | `src/Tye2.Hosting/Watch/` (11 files) | Untested — file system watchers, MSBuild integration |
+| Diagnostics | `src/Tye2.Hosting.Diagnostics/` (5 files, ~300 lines) | Untested |
 
 ### Lower Priority — Utilities (untested)
 
