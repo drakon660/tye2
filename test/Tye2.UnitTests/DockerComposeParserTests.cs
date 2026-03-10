@@ -138,6 +138,26 @@ services:
         }
 
         [Fact]
+        public void Parse_Ports_MultiplePorts_AssignsBindingNames()
+        {
+            using var parser = new DockerComposeParser(@"
+services:
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+      - 15692:15692
+");
+            var app = parser.ParseConfigApplication();
+            var bindings = app.Services.Single().Bindings;
+
+            bindings.Should().HaveCount(3);
+            bindings.Select(b => b.Name).Should().OnlyContain(name => !string.IsNullOrWhiteSpace(name));
+            bindings.Select(b => b.Name).Should().OnlyHaveUniqueItems();
+        }
+
+        [Fact]
         public void Parse_Ports_AllSetToHttpProtocol()
         {
             using var parser = new DockerComposeParser(@"
@@ -168,6 +188,24 @@ services:
             bindings.Select(b => b.Port).Should().Equal(27017, 27018, 27019);
             bindings.Select(b => b.ContainerPort).Should().Equal(27017, 27018, 27019);
             bindings.Should().OnlyContain(b => b.Protocol == "http");
+        }
+
+        [Fact]
+        public void Parse_Ports_RangeSyntax_AssignsBindingNames()
+        {
+            using var parser = new DockerComposeParser(@"
+services:
+  mongo:
+    image: mongo
+    ports:
+      - 27017-27019:27017-27019
+");
+            var app = parser.ParseConfigApplication();
+            var bindings = app.Services.Single().Bindings;
+
+            bindings.Should().HaveCount(3);
+            bindings.Select(b => b.Name).Should().OnlyContain(name => !string.IsNullOrWhiteSpace(name));
+            bindings.Select(b => b.Name).Should().OnlyHaveUniqueItems();
         }
 
         [Fact]

@@ -335,6 +335,8 @@ namespace Tye2.Core.DockerCompose
                         throw new TyeYamlException(port.Start, $"Unsupported docker-compose port format '{portString}'.");
                 }
             }
+
+            EnsureBindingNamesForMultiplePorts(service);
         }
 
         private static void ParsePortBindings(
@@ -407,6 +409,46 @@ namespace Tye2.Core.DockerCompose
                 // TODO how to specify protocol with docker compose. Using http for now.
                 Protocol = "http",
             });
+        }
+
+        private static void EnsureBindingNamesForMultiplePorts(ConfigService service)
+        {
+            if (service.Bindings.Count <= 1)
+            {
+                return;
+            }
+
+            var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var binding in service.Bindings)
+            {
+                if (!string.IsNullOrEmpty(binding.Name))
+                {
+                    usedNames.Add(binding.Name);
+                }
+            }
+
+            foreach (var binding in service.Bindings)
+            {
+                if (!string.IsNullOrEmpty(binding.Name))
+                {
+                    continue;
+                }
+
+                var baseName = binding.Port.HasValue
+                    ? $"port{binding.Port.Value}"
+                    : binding.ContainerPort.HasValue
+                        ? $"container{binding.ContainerPort.Value}"
+                        : "binding";
+
+                var candidate = baseName;
+                var suffix = 2;
+                while (!usedNames.Add(candidate))
+                {
+                    candidate = $"{baseName}-{suffix++}";
+                }
+
+                binding.Name = candidate;
+            }
         }
 
         private static void ParseVolumes(YamlMappingNode node, ConfigApplication app)
@@ -526,5 +568,6 @@ namespace Tye2.Core.DockerCompose
         //}
     }
 }
+
 
 
