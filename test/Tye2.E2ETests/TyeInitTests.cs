@@ -1,5 +1,6 @@
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.IO;
 using Tye2.Test.Infrastructure;
 using Xunit;
@@ -97,5 +98,39 @@ namespace Tye2.E2ETests
 
             Assert.DoesNotContain("thisisatest", content);
         }
+        [Fact]
+        public void Init_FromDockerCompose_ProducesTyeYaml_WithoutOverridingCompose()
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), $"tye2-init-compose-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(tempDir);
+
+            try
+            {
+                var composePath = Path.Combine(tempDir, "docker-compose.yaml");
+                var composeContent = """
+                    version: '3'
+                    services:
+                      mongo:
+                        image: mongo
+                        ports:
+                          - 27017:27017
+                    """;
+                File.WriteAllText(composePath, composeContent);
+
+                var outputPath = InitHost.CreateTyeFile(new FileInfo(composePath), force: false);
+
+                Assert.Equal(Path.Combine(tempDir, "tye.yaml"), outputPath);
+                Assert.True(File.Exists(outputPath));
+                Assert.Equal(composeContent, File.ReadAllText(composePath));
+            }
+            finally
+            {
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, recursive: true);
+                }
+            }
+        }
     }
 }
+
