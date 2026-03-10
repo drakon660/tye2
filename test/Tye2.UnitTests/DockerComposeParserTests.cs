@@ -1,3 +1,4 @@
+using AwesomeAssertions;
 using System;
 using System.IO;
 using System.Linq;
@@ -43,8 +44,8 @@ namespace Tye2.UnitTests
         {
             using var parser = new DockerComposeParser("version: '3'");
             var app = parser.ParseConfigApplication();
-            Assert.NotNull(app);
-            Assert.Empty(app.Services);
+            app.Should().NotBeNull();
+            app.Services.Should().BeEmpty();
         }
 
         [Fact]
@@ -57,9 +58,9 @@ services:
     image: redis:latest
 ");
             var app = parser.ParseConfigApplication();
-            var svc = Assert.Single(app.Services);
-            Assert.Equal("redis", svc.Name);
-            Assert.Equal("redis:latest", svc.Image);
+            var svc = app.Services.Should().ContainSingle().Subject;
+            svc.Name.Should().Be("redis");
+            svc.Image.Should().Be("redis:latest");
         }
 
         [Fact]
@@ -76,11 +77,11 @@ services:
     image: redis
 ");
             var app = parser.ParseConfigApplication();
-            Assert.Equal(3, app.Services.Count);
+            app.Services.Count.Should().Be(3);
             var names = app.Services.Select(s => s.Name).OrderBy(n => n).ToList();
-            Assert.Contains("cache", names);
-            Assert.Contains("db", names);
-            Assert.Contains("web", names);
+            names.Should().Contain("cache");
+            names.Should().Contain("db");
+            names.Should().Contain("web");
         }
 
         // =====================================================================
@@ -98,10 +99,10 @@ services:
       - 8080:80
 ");
             var app = parser.ParseConfigApplication();
-            var binding = Assert.Single(app.Services.Single().Bindings);
-            Assert.Equal(8080, binding.Port);
-            Assert.Equal(80, binding.ContainerPort);
-            Assert.Equal("http", binding.Protocol);
+            var binding = app.Services.Single().Bindings.Should().ContainSingle().Subject;
+            binding.Port.Should().Be(8080);
+            binding.ContainerPort.Should().Be(80);
+            binding.Protocol.Should().Be("http");
         }
 
         [Fact]
@@ -115,9 +116,9 @@ services:
       - 3000
 ");
             var app = parser.ParseConfigApplication();
-            var binding = Assert.Single(app.Services.Single().Bindings);
-            Assert.Equal(3000, binding.Port);
-            Assert.Equal(3000, binding.ContainerPort);
+            var binding = app.Services.Single().Bindings.Should().ContainSingle().Subject;
+            binding.Port.Should().Be(3000);
+            binding.ContainerPort.Should().Be(3000);
         }
 
         [Fact]
@@ -133,7 +134,7 @@ services:
       - 8080:8080
 ");
             var app = parser.ParseConfigApplication();
-            Assert.Equal(3, app.Services.Single().Bindings.Count);
+            app.Services.Single().Bindings.Count.Should().Be(3);
         }
 
         [Fact]
@@ -148,7 +149,7 @@ services:
       - 9090:90
 ");
             var app = parser.ParseConfigApplication();
-            Assert.All(app.Services.Single().Bindings, b => Assert.Equal("http", b.Protocol));
+            app.Services.Single().Bindings.Should().OnlyContain(b => b.Protocol == "http");
         }
 
         // =====================================================================
@@ -168,9 +169,9 @@ services:
 ");
             var app = parser.ParseConfigApplication();
             var config = app.Services.Single().Configuration;
-            Assert.Equal(2, config.Count);
-            Assert.Equal("secret", config.First(c => c.Name == "POSTGRES_PASSWORD").Value);
-            Assert.Equal("mydb", config.First(c => c.Name == "POSTGRES_DB").Value);
+            config.Count.Should().Be(2);
+            config.First(c => c.Name == "POSTGRES_PASSWORD").Value.Should().Be("secret");
+            config.First(c => c.Name == "POSTGRES_DB").Value.Should().Be("mydb");
         }
 
         [Fact]
@@ -184,9 +185,9 @@ services:
       - SOME_VAR
 ");
             var app = parser.ParseConfigApplication();
-            var cfg = Assert.Single(app.Services.Single().Configuration);
-            Assert.Equal("SOME_VAR", cfg.Name);
-            Assert.Null(cfg.Value);
+            var cfg = app.Services.Single().Configuration.Should().ContainSingle().Subject;
+            cfg.Name.Should().Be("SOME_VAR");
+            cfg.Value.Should().BeNull();
         }
 
         // =====================================================================
@@ -206,9 +207,9 @@ services:
 ");
             var app = parser.ParseConfigApplication();
             var config = app.Services.Single().Configuration;
-            Assert.Equal(2, config.Count);
-            Assert.Equal("secret", config.First(c => c.Name == "POSTGRES_PASSWORD").Value);
-            Assert.Equal("mydb", config.First(c => c.Name == "POSTGRES_DB").Value);
+            config.Count.Should().Be(2);
+            config.First(c => c.Name == "POSTGRES_PASSWORD").Value.Should().Be("secret");
+            config.First(c => c.Name == "POSTGRES_DB").Value.Should().Be("mydb");
         }
 
         // =====================================================================
@@ -225,7 +226,7 @@ services:
       dockerfile: Dockerfile.prod
 ");
             var app = parser.ParseConfigApplication();
-            Assert.Equal("Dockerfile.prod", app.Services.Single().DockerFile);
+            app.Services.Single().DockerFile.Should().Be("Dockerfile.prod");
         }
 
         [Fact]
@@ -241,7 +242,7 @@ services:
       context: {contextDir.Replace('\\', '/')}
 ");
             var app = parser.ParseConfigApplication();
-            Assert.Contains("MyApp.csproj", app.Services.Single().Project);
+            app.Services.Single().Project.Should().Contain("MyApp.csproj");
         }
 
         [Fact]
@@ -257,7 +258,7 @@ services:
       context: {contextDir.Replace('\\', '/')}
 ");
             var app = parser.ParseConfigApplication();
-            Assert.Contains("MyApp.fsproj", app.Services.Single().Project);
+            app.Services.Single().Project.Should().Contain("MyApp.fsproj");
         }
 
         [Fact]
@@ -273,8 +274,8 @@ services:
     build:
       context: {contextDir.Replace('\\', '/')}
 ");
-            var ex = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains("Multiple proj files", ex.Message);
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain("Multiple proj files");
         }
 
         [Fact]
@@ -289,7 +290,7 @@ services:
       context: {contextDir.Replace('\\', '/')}
 ");
             var app = parser.ParseConfigApplication();
-            Assert.Null(app.Services.Single().Project);
+            app.Services.Single().Project.Should().BeNull();
         }
 
         [Fact]
@@ -301,8 +302,8 @@ services:
     build:
       unknown_key: value
 ");
-            var ex = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("unknown_key"), ex.Message);
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("unknown_key"));
         }
 
         // =====================================================================
@@ -314,7 +315,7 @@ services:
         {
             using var parser = new DockerComposeParser("version: '3.8'");
             var app = parser.ParseConfigApplication();
-            Assert.NotNull(app);
+            app.Should().NotBeNull();
         }
 
         [Fact]
@@ -326,7 +327,7 @@ volumes:
   data:
 ");
             var app = parser.ParseConfigApplication();
-            Assert.NotNull(app);
+            app.Should().NotBeNull();
         }
 
         [Fact]
@@ -338,7 +339,7 @@ networks:
   frontend:
 ");
             var app = parser.ParseConfigApplication();
-            Assert.NotNull(app);
+            app.Should().NotBeNull();
         }
 
         [Fact]
@@ -350,7 +351,7 @@ configs:
   my_config:
 ");
             var app = parser.ParseConfigApplication();
-            Assert.NotNull(app);
+            app.Should().NotBeNull();
         }
 
         [Fact]
@@ -362,7 +363,7 @@ secrets:
   db_password:
 ");
             var app = parser.ParseConfigApplication();
-            Assert.NotNull(app);
+            app.Should().NotBeNull();
         }
 
         [Fact]
@@ -372,8 +373,8 @@ secrets:
 version: '3'
 unknown_top_level: value
 ");
-            var ex = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("unknown_top_level"), ex.Message);
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("unknown_top_level"));
         }
 
         // =====================================================================
@@ -404,7 +405,7 @@ services:
     {serviceProperty}
 ");
             var app = parser.ParseConfigApplication();
-            Assert.Single(app.Services);
+            app.Services.Should().ContainSingle();
         }
 
         [Fact]
@@ -416,8 +417,8 @@ services:
     image: myapp
     totally_unknown: value
 ");
-            var ex = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("totally_unknown"), ex.Message);
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("totally_unknown"));
         }
 
         // =====================================================================
@@ -434,14 +435,14 @@ services:
 ");
             var app = parser.ParseConfigApplication();
             var svc = app.Services.Single();
-            Assert.NotNull(svc.Bindings);
-            Assert.Empty(svc.Bindings);
-            Assert.NotNull(svc.Configuration);
-            Assert.Empty(svc.Configuration);
-            Assert.NotNull(svc.Volumes);
-            Assert.Empty(svc.Volumes);
-            Assert.NotNull(svc.Tags);
-            Assert.Empty(svc.Tags);
+            svc.Bindings.Should().NotBeNull();
+            svc.Bindings.Should().BeEmpty();
+            svc.Configuration.Should().NotBeNull();
+            svc.Configuration.Should().BeEmpty();
+            svc.Volumes.Should().NotBeNull();
+            svc.Volumes.Should().BeEmpty();
+            svc.Tags.Should().NotBeNull();
+            svc.Tags.Should().BeEmpty();
         }
 
         // =====================================================================
@@ -452,31 +453,31 @@ services:
         public void Parse_InvalidYaml_ThrowsTyeYamlException()
         {
             using var parser = new DockerComposeParser("{ broken yaml [}");
-            var ex = Assert.ThrowsAny<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains("Unable to parse", ex.Message);
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain("Unable to parse");
         }
 
         [Fact]
         public void Parse_EmptyDocument_Throws()
         {
             using var parser = new DockerComposeParser("");
-            Assert.Throws<ArgumentOutOfRangeException>(() => parser.ParseConfigApplication());
+            ((Action)(() => parser.ParseConfigApplication())).Should().Throw<ArgumentOutOfRangeException>();
         }
 
         [Fact]
         public void Parse_RootIsSequence_Throws()
         {
             using var parser = new DockerComposeParser("- item1\n- item2");
-            var ex = Assert.ThrowsAny<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Sequence.ToString()), ex.Message);
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Sequence.ToString()));
         }
 
         [Fact]
         public void Parse_RootIsScalar_Throws()
         {
             using var parser = new DockerComposeParser("justascalar");
-            var ex = Assert.ThrowsAny<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()), ex.Message);
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()));
         }
 
         // =====================================================================
@@ -495,8 +496,8 @@ services:
 ");
             using var parser = new DockerComposeParser(new FileInfo(file));
             var app = parser.ParseConfigApplication();
-            Assert.NotNull(app.Name);
-            Assert.NotEmpty(app.Name);
+            app.Name.Should().NotBeNull();
+            app.Name.Should().NotBeEmpty();
         }
 
         [Fact]
@@ -508,7 +509,7 @@ services:
 
             using var parser = new DockerComposeParser(fileInfo);
             var app = parser.ParseConfigApplication();
-            Assert.Equal(fileInfo.FullName, app.Source.FullName);
+            app.Source.FullName.Should().Be(fileInfo.FullName);
         }
 
         // =====================================================================
@@ -554,21 +555,26 @@ volumes:
   pgdata:
 ");
             var app = parser.ParseConfigApplication();
-            Assert.Equal(3, app.Services.Count);
+            app.Services.Count.Should().Be(3);
 
             var web = app.Services.First(s => s.Name == "web");
-            Assert.Equal("nginx:alpine", web.Image);
-            Assert.Equal(2, web.Bindings.Count);
+            web.Image.Should().Be("nginx:alpine");
+            web.Bindings.Count.Should().Be(2);
 
             var api = app.Services.First(s => s.Name == "api");
-            Assert.Equal("myapi:latest", api.Image);
-            Assert.Single(api.Bindings);
-            Assert.Equal(5000, api.Bindings.Single().Port);
-            Assert.Equal(2, api.Configuration.Count);
+            api.Image.Should().Be("myapi:latest");
+            api.Bindings.Should().ContainSingle();
+            api.Bindings.Single().Port.Should().Be(5000);
+            api.Configuration.Count.Should().Be(2);
 
             var db = app.Services.First(s => s.Name == "db");
-            Assert.Equal("postgres:15", db.Image);
-            Assert.Equal("secret", db.Configuration.First(c => c.Name == "POSTGRES_PASSWORD").Value);
+            db.Image.Should().Be("postgres:15");
+            db.Configuration.First(c => c.Name == "POSTGRES_PASSWORD").Value.Should().Be("secret");
         }
     }
 }
+
+
+
+
+

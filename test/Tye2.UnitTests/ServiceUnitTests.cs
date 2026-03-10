@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using AwesomeAssertions;
+using System.Collections.Generic;
 using Tye2.Core;
 using Tye2.Hosting.Model;
 using Xunit;
@@ -23,7 +24,7 @@ namespace Tye2.UnitTests
                 });
             }
 
-            Assert.Equal(expected, service.State);
+            service.State.Should().Be(expected);
 
         }
 
@@ -51,3 +52,6 @@ namespace Tye2.UnitTests
             };
     }
 }
+
+
+

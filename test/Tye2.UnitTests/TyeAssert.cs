@@ -1,3 +1,4 @@
+using AwesomeAssertions;
 // See the LICENSE file in the project root for more information.
 
 using System;
@@ -11,9 +12,9 @@ namespace Tye2.Test.Infrastructure
     {
         public static void Equal(ConfigApplication expected, ConfigApplication actual)
         {
-            Assert.Equal(expected.Name, actual.Name);
-            Assert.Equal(expected.Registry, actual.Registry);
-            Assert.Equal(expected.Network, actual.Network);
+            actual.Name.Should().Be(expected.Name);
+            actual.Registry.Should().Be(expected.Registry);
+            actual.Network.Should().Be(expected.Network);
 
             foreach (var ingress in actual.Ingress)
             {
@@ -21,8 +22,8 @@ namespace Tye2.Test.Infrastructure
                     .Ingress
                     .Where(o => o.Name == ingress.Name)
                     .Single();
-                Assert.NotNull(otherIngress);
-                Assert.Equal(otherIngress.Replicas, ingress.Replicas);
+                otherIngress.Should().NotBeNull();
+                ingress.Replicas.Should().Be(otherIngress.Replicas);
 
                 foreach (var rule in ingress.Rules)
                 {
@@ -30,7 +31,7 @@ namespace Tye2.Test.Infrastructure
                         .Rules
                         .Where(o => o.Path == rule.Path && o.Host == rule.Host && o.Service?.Equals(rule.Service, StringComparison.OrdinalIgnoreCase) == true)
                         .Single();
-                    Assert.NotNull(otherRule);
+                    otherRule.Should().NotBeNull();
                 }
 
                 foreach (var binding in ingress.Bindings)
@@ -40,9 +41,9 @@ namespace Tye2.Test.Infrastructure
                         .Where(o => o.Name == binding.Name && o.Port == binding.Port && o.Protocol == binding.Protocol)
                         .Single();
 
-                    Assert.NotNull(otherBinding);
+                    otherBinding.Should().NotBeNull();
                 }
-                Assert.Equal(otherIngress.Tags, ingress.Tags);
+                ingress.Tags.Should().BeEquivalentTo(otherIngress.Tags);
             }
 
             foreach (var service in actual.Services)
@@ -51,16 +52,16 @@ namespace Tye2.Test.Infrastructure
                     .Services
                     .Where(o => o.Name.Equals(service.Name, StringComparison.OrdinalIgnoreCase))
                     .Single();
-                Assert.NotNull(otherService);
-                Assert.Equal(otherService.Args, service.Args);
-                Assert.Equal(otherService.Build, service.Build);
-                Assert.Equal(otherService.Executable, service.Executable);
-                Assert.Equal(otherService.External, service.External);
-                Assert.Equal(otherService.Image, service.Image);
-                Assert.Equal(otherService.Project, service.Project);
-                Assert.Equal(otherService.Replicas, service.Replicas);
-                Assert.Equal(otherService.WorkingDirectory, service.WorkingDirectory);
-                Assert.Equal(otherService.Tags, service.Tags);
+                otherService.Should().NotBeNull();
+                service.Args.Should().Be(otherService.Args);
+                service.Build.Should().Be(otherService.Build);
+                service.Executable.Should().Be(otherService.Executable);
+                service.External.Should().Be(otherService.External);
+                service.Image.Should().Be(otherService.Image);
+                service.Project.Should().Be(otherService.Project);
+                service.Replicas.Should().Be(otherService.Replicas);
+                service.WorkingDirectory.Should().Be(otherService.WorkingDirectory);
+                service.Tags.Should().BeEquivalentTo(otherService.Tags);
 
                 foreach (var binding in service.Bindings)
                 {
@@ -73,7 +74,7 @@ namespace Tye2.Test.Infrastructure
                                         && o.Host == binding.Host)
                                     .Single();
 
-                    Assert.NotNull(otherBinding);
+                    otherBinding.Should().NotBeNull();
                 }
 
                 foreach (var config in service.Configuration)
@@ -83,7 +84,7 @@ namespace Tye2.Test.Infrastructure
                                         && o.Value == config.Value)
                                     .Single();
 
-                    Assert.NotNull(otherConfig);
+                    otherConfig.Should().NotBeNull();
                 }
 
                 foreach (var volume in service.Volumes)
@@ -93,9 +94,13 @@ namespace Tye2.Test.Infrastructure
                                        && o.Target == volume.Target
                                        && o.Source == volume.Source)
                                    .Single();
-                    Assert.NotNull(otherVolume);
+                    otherVolume.Should().NotBeNull();
                 }
             }
         }
     }
 }
+
+
+
+
