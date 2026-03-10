@@ -152,10 +152,45 @@ services:
             app.Services.Single().Bindings.Should().OnlyContain(b => b.Protocol == "http");
         }
 
+        [Fact]
+        public void Parse_Ports_RangeSyntax_ParsesExpandedBindings()
+        {
+            using var parser = new DockerComposeParser(@"
+services:
+  mongo:
+    image: mongo
+    ports:
+      - 27017-27019:27017-27019
+");
+            var app = parser.ParseConfigApplication();
+            var bindings = app.Services.Single().Bindings;
+            bindings.Should().HaveCount(3);
+            bindings.Select(b => b.Port).Should().Equal(27017, 27018, 27019);
+            bindings.Select(b => b.ContainerPort).Should().Equal(27017, 27018, 27019);
+            bindings.Should().OnlyContain(b => b.Protocol == "http");
+        }
+
+        [Fact]
+        public void Parse_Ports_HostIpMapping_ParsesHostPortAndContainerPort()
+        {
+            using var parser = new DockerComposeParser(@"
+services:
+  mongo:
+    image: mongo
+    ports:
+      - 127.0.0.1:27017:27017
+");
+            var app = parser.ParseConfigApplication();
+            var binding = app.Services.Single().Bindings.Should().ContainSingle().Subject;
+            binding.Host.Should().Be("127.0.0.1");
+            binding.Port.Should().Be(27017);
+            binding.ContainerPort.Should().Be(27017);
+            binding.Protocol.Should().Be("http");
+        }
+
         // =====================================================================
         // Environment Parsing — Sequence Format
         // =====================================================================
-
         [Fact]
         public void Parse_Environment_SequenceFormat_KeyValue()
         {
@@ -573,6 +608,10 @@ volumes:
         }
     }
 }
+
+
+
+
 
 
 
