@@ -3,103 +3,82 @@
 ## Current State
 
 ### Test Projects
-- **Tye2.UnitTests** — 5 test files (ANSI converter, CLI options, service state, YAML deserialization/validation)
+- **Tye2.UnitTests** — 523 tests across 31 test files (up from 5 files originally)
 - **Tye2.E2ETests** — 14+ integration tests (require Docker, slow)
 - **Tye2.Extensions.Configuration.Tests** — configuration extension tests
-- **Tye2.Test.Infrastructure** — test helpers (not tests themselves)
 
-### Core Problem
-The project relies almost entirely on E2E tests. There are ~120+ classes with zero unit tests. E2E tests cover happy paths but miss error handling, edge cases, and malformed input scenarios.
-
----
-
-## Critical Gaps — Core Logic (0% unit tests)
-
-| Component | File(s) | Lines | Status |
-|-----------|---------|-------|--------|
-| ApplicationFactory | `src/Tye2.Core/ApplicationFactory.cs` | ~675 | E2E only, no unit tests for core logic |
-| YAML Config Parsers | `src/Tye2.Core/Serialization/` (6 files) | ~1195 | Only basic deserialization tested |
-| ConfigFactory | `src/Tye2.Core/ConfigModel/ConfigFactory.cs` | ~118 | Zero tests |
-| DockerComposeParser | `src/Tye2.Core/DockerCompose/DockerComposeParser.cs` | ~330 | Zero tests |
-| Kubernetes generation | `src/Tye2.Core/KubernetesManifestGenerator.cs` + 3 files | ~500+ | Zero tests |
-| DockerfileGenerator | `src/Tye2.Core/DockerfileGenerator.cs` | ~100+ | E2E only |
-| Service builders | 8 builder classes | ~500+ | Zero tests |
-
-### What's missing
-- `ApplicationFactory.CreateAsync()` — path evaluation, MSBuild parsing, multi-TFM handling, cycle detection, extension loading
-- Config parsers — binding parsing, ingress rules, env vars, probes, volumes, build properties, validation errors
-- `ConfigFactory` — factory dispatch (YAML vs csproj vs sln), `FromProject()`, `FromSolution()`, launchSettings.json detection
-- DockerComposeParser — service mapping, port/binding conversion, env var handling
-- Kubernetes — ingress/service/deployment generation, labels, probes, volumes, env var injection
-- DockerfileGenerator — multi-phase vs single-phase, argument escaping, image selection, entry point generation
-- Service builders — initialization, dependency resolution, binding assignment, env vars, replicas
+### Progress
+Phase 1 (Critical) from the original analysis is now **fully covered**. All 6 critical components have comprehensive unit tests.
+Phase 2 (Runtime Infrastructure) partially covered: PortAssigner, ReplicaRegistry.
+Phase 3 (Utilities) partially covered: ArgumentEscaper, NameInferer, ConfigFileFinder.
 
 ---
 
-## High Gaps — Runtime Infrastructure (0% unit tests)
+## Covered — Core Logic (Phase 1 complete)
 
-| Component | File(s) | Lines | Status |
-|-----------|---------|-------|--------|
-| ProcessRunner | `src/Tye2.Hosting/ProcessRunner.cs` | ~300 | Zero tests |
-| DockerRunner | `src/Tye2.Hosting/DockerRunner.cs` | ~300 | Zero tests |
-| PortAssigner | `src/Tye2.Hosting/PortAssigner.cs` | ~150 | Zero tests |
-| ReplicaMonitor | `src/Tye2.Hosting/ReplicaMonitor.cs` | ~200 | Zero tests |
-| ProxyService | `src/Tye2.Hosting/ProxyService.cs` | ~300 | Zero tests |
-| HttpProxyService | `src/Tye2.Hosting/HttpProxyService.cs` | ~300 | Zero tests |
-| File watching | `src/Tye2.Hosting/Watch/` (4 files) | ~600 | Zero tests |
-| Diagnostics | `src/Tye2.Hosting.Diagnostics/` (5 files) | ~300 | Zero tests |
-| TyeHost | `src/Tye2.Hosting/TyeHost.cs` | ~200 | Zero tests |
-| ReplicaRegistry | `src/Tye2.Hosting/ReplicaRegistry.cs` | ~200 | Zero tests |
+| Component | Test File(s) | Tests | Coverage |
+|-----------|-------------|-------|----------|
+| YAML Config Parsers | `YamlConfigParserTests/` (14 files) | 96 | Bindings, ingress, env vars, probes, volumes, build props, docker args, env files, extensions, registries, exceptions, edge cases |
+| ConfigFactory | `ConfigFactoryTests.cs` | 35 | File routing (.yaml/.yml/.csproj/.fsproj/.sln), Docker Compose detection, FromProject, FromSolution, NormalizeServiceName |
+| ApplicationFactory | `ApplicationFactoryTests.cs` | 44 | Image/external services, bindings, env vars, volumes, ingress, extensions, filters, registry, probes, dependencies |
+| DockerComposeParser | `DockerComposeParserTests.cs` | 45 | Service parsing, ports, env (sequence + mapping), build section, top-level keys, ignored service keys, error handling |
+| KubernetesManifestGenerator | `KubernetesManifestGeneratorTests.cs` | 72 | CreateService (ports, labels, annotations, selector), CreateDeployment (images, env, probes, sidecars, volumes, secrets, pull secrets), CreateIngress (rules, paths, hosts, API version) |
+| DockerfileGenerator | `DockerfileGeneratorTests.cs` | 60 | TagIs50OrNewer, ApplyContainerDefaults (base/build/image names+tags, registry, TFM routing, .NET Core vs .NET 5+ paths), WriteDockerfile (multiphase, local publish, args/CMD, UTF-8 encoding) |
 
-### What's missing
-- Process spawning, argument/env passing, output streams, signal forwarding, exit codes
-- Container creation, port mapping, volume mounting, status tracking, cleanup
-- Port assignment, conflict detection, replica port mapping
-- Health/readiness/liveness probes, timeout handling, replica state transitions
-- Socket proxy, HTTP proxy, load balancing, connection forwarding, route matching
-- File system events, debouncing, build triggers, exclusion patterns
-- Event pipe sessions, log/metric/trace collection, provider configuration
-- Application startup/shutdown orchestration, service ordering, dependency waiting
+## Covered — Runtime Infrastructure (Phase 2 partial)
+
+| Component | Test File(s) | Tests | Coverage |
+|-----------|-------------|-------|----------|
+| PortAssigner | `PortAssignerTests.cs` | 15 | Skip without RunInfo, auto-assign ports, preserve existing, replica mapping, readiness proxy, HTTP/HTTPS container port defaults, multiple bindings/services, edge cases |
+| ReplicaRegistry | `ReplicaRegistryTests.cs` | 17 | Write/read/delete events, JSON serialization, separate stores, dispose cleanup, roundtrip, concurrent writes |
+
+## Covered — Utilities (Phase 3 partial)
+
+| Component | Test File(s) | Tests | Coverage |
+|-----------|-------------|-------|----------|
+| ArgumentEscaper | `ArgumentEscaperTests.cs` | 17 | Simple args, whitespace quoting, backslash escaping, embedded quotes, already-quoted strings, mixed args, real-world examples |
+| NameInferer | `NameInfererTests.cs` | 9 | .sln/.csproj/.fsproj name extraction, YAML directory fallback, case normalization, null input |
+| ConfigFileFinder | `ConfigFileFinderTests.cs` | 14 | tye.yaml/yml, docker-compose, .csproj/.fsproj/.sln, priority order, empty dir, multiple matches, custom formats |
+
+## Covered — Pre-existing Tests
+
+| Component | Test File(s) | Tests | Coverage |
+|-----------|-------------|-------|----------|
+| YAML Deserialization | `TyeDeserializationTests.cs` | 60 | Pre-existing deserialization tests |
+| YAML Validation | `TyeDeserializationValidationTests.cs` | 18 | Pre-existing validation tests |
+| Service Model | `ServiceUnitTests.cs` | 13 | Pre-existing service model tests |
+| DefaultOptionsMiddleware | `DefaultOptionsMiddlewareTests.cs` | 6 | Pre-existing middleware tests |
+| Ansi2HtmlConverter | `Ansi2HtmlConverterTests.cs` | 2 | Pre-existing converter tests |
 
 ---
 
-## Medium Gaps — Extensions & Utilities (0% tests)
+## Remaining Gaps
 
-### Extensions
-| Extension | File | Status |
-|-----------|------|--------|
-| Dapr | `src/Tye2.Extensions/Dapr/DaprExtension.cs` | Zero tests |
-| Zipkin | `src/Tye2.Extensions/Zipkin/ZipkinExtension.cs` | Zero tests |
-| Seq | `src/Tye2.Extensions/Seq/SeqExtensions.cs` | Zero tests |
-| Elastic | `src/Tye2.Extensions/Elastic/ElasticStackExtension.cs` | Zero tests |
+### High Priority — Runtime Infrastructure (untested)
+
+| Component | File(s) | Lines | Testability |
+|-----------|---------|-------|-------------|
+| ProcessRunner | `src/Tye2.Hosting/ProcessRunner.cs` | ~300 | Hard — spawns OS processes, signal forwarding |
+| DockerRunner | `src/Tye2.Hosting/DockerRunner.cs` | ~300 | Hard — Docker CLI interaction, container lifecycle |
+| ReplicaMonitor | `src/Tye2.Hosting/ReplicaMonitor.cs` | ~200 | Hard — tightly coupled to HTTP probing, timers, Rx subscriptions |
+| ProxyService | `src/Tye2.Hosting/ProxyService.cs` | ~300 | Hard — socket proxy, connection forwarding |
+| HttpProxyService | `src/Tye2.Hosting/HttpProxyService.cs` | ~300 | Hard — HTTP proxy, load balancing |
+| TyeHost | `src/Tye2.Hosting/TyeHost.cs` | ~200 | Hard — orchestrates startup/shutdown of all services |
+
+### Medium Priority — Extensions (untested)
+
+| Component | File(s) | Status |
+|-----------|---------|--------|
+| Dapr extension | `src/Tye2.Extensions/Dapr/DaprExtension.cs` | Zero tests |
+| Zipkin extension | `src/Tye2.Extensions/Zipkin/ZipkinExtension.cs` | Zero tests |
+| Seq extension | `src/Tye2.Extensions/Seq/SeqExtensions.cs` | Zero tests |
+| Elastic extension | `src/Tye2.Extensions/Elastic/ElasticStackExtension.cs` | Zero tests |
 | Extension framework | `src/Tye2.Core/Extension.cs`, `ExtensionContext.cs` | Zero tests |
+| File watching | `src/Tye2.Hosting/Watch/` (4 files, ~600 lines) | Zero tests |
+| Diagnostics | `src/Tye2.Hosting.Diagnostics/` (5 files, ~300 lines) | Zero tests |
 
-### Utilities (all untested)
-- NextPortFinder, ArgumentEscaper, ConfigFileFinder, NameInferer
-- ContainerEngine, ProjectReader, GitDetector
+### Lower Priority — Utilities (untested)
+
+- NextPortFinder, ContainerEngine, ProjectReader, GitDetector
 - ConsoleExtensions, ProcessExtensions, DirectoryCopy, TempDirectory
-
-### CLI Commands
-- `Program.*.cs` files (~500+ lines) — E2E only, no unit tests for argument parsing, validation, error handling
-
----
-
-## Recommended Test Priority
-
-### Phase 1 — Critical
-1. **YAML parsers + ConfigFactory** — handle user input, most likely to hit edge cases
-2. **ApplicationFactory** — central orchestrator, complex branching logic
-3. **Kubernetes generation** — produces external artifacts, hard to debug without tests
-4. **DockerComposeParser** — user-facing, crash-prone (Split without bounds checks)
-
-### Phase 2 — High
-5. **ProcessRunner + DockerRunner** — runtime correctness
-6. **ReplicaMonitor** — state machine logic, health checks
-7. **PortAssigner** — port conflicts cause hard-to-debug failures
-8. **ProxyService + HttpProxyService** — networking edge cases
-
-### Phase 3 — Medium
-9. **Extension framework + implementations**
-10. **File watching system**
-11. **Diagnostics collection**
-12. **Utility classes**
+- CLI commands (`Program.*.cs` files, ~500+ lines)
