@@ -269,7 +269,7 @@ namespace Tye2.UnitTests
         // =====================================================================
 
         [Fact]
-        public void WriteReplicaEvent_ConcurrentWrites_AllSucceed()
+        public async Task WriteReplicaEvent_ConcurrentWrites_AllSucceed()
         {
             using var registry = new ReplicaRegistry(_tempDir, _logger);
 
@@ -278,10 +278,11 @@ namespace Tye2.UnitTests
                     new Dictionary<string, string> { ["index"] = i.ToString() }))
             ).ToArray();
 
-            Task.WaitAll(tasks);
+            await Task.WhenAll(tasks);
 
             var lines = File.ReadAllLines(Path.Combine(_tempDir, ".tye", "concurrent_store"));
             lines.Where(l => !string.IsNullOrWhiteSpace(l)).Should().HaveCount(20);
         }
     }
 }
+
