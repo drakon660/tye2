@@ -59,7 +59,7 @@ namespace Tye2.UnitTests
                 TargetFrameworkVersion = targetFrameworkVersion,
                 TargetFramework = targetFramework,
                 IsAspNet = isAspNet,
-                Version = version,
+                Version = version ?? null!,
                 Args = args,
             };
         }
@@ -549,7 +549,7 @@ namespace Tye2.UnitTests
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             content.Should().Contain("FROM mcr.microsoft.com/dotnet/sdk:8.0 as SDK");
             content.Should().Contain("WORKDIR /src");
             content.Should().Contain("COPY . .");
@@ -577,7 +577,7 @@ namespace Tye2.UnitTests
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             content.Should().Contain("CMD [\"--urls http://+:80\"]");
         }
 
@@ -598,7 +598,7 @@ namespace Tye2.UnitTests
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             content.Should().NotContain("CMD");
         }
 
@@ -619,7 +619,7 @@ namespace Tye2.UnitTests
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             content.Should().Contain("as SDK");
             content.Should().Contain("as RUNTIME");
         }
@@ -643,7 +643,7 @@ namespace Tye2.UnitTests
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             content.Should().Contain("FROM mcr.microsoft.com/dotnet/runtime:8.0");
             content.Should().Contain("WORKDIR /app");
             content.Should().Contain("COPY . /app");
@@ -667,7 +667,7 @@ namespace Tye2.UnitTests
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             content.Should().Contain("CMD [\"--verbose\"]");
         }
 
@@ -686,7 +686,7 @@ namespace Tye2.UnitTests
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             content.Should().NotContain("CMD");
         }
 
@@ -705,7 +705,7 @@ namespace Tye2.UnitTests
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             content.Should().NotContain("CMD");
         }
 
@@ -728,7 +728,7 @@ namespace Tye2.UnitTests
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
-            var bytes = await File.ReadAllBytesAsync(filePath);
+            var bytes = await File.ReadAllBytesAsync(filePath, TestContext.Current.CancellationToken);
             // UTF8 BOM is 0xEF, 0xBB, 0xBF
             (bytes.Length >= 3).Should().BeTrue("File should have content");
             var hasBom = bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
@@ -772,6 +772,7 @@ namespace Tye2.UnitTests
         }
     }
 }
+
 
 
 
