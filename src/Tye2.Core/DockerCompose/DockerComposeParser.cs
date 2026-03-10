@@ -295,6 +295,7 @@ namespace Tye2.Core.DockerCompose
                     {
                         configItem.Name = argString;
                     }
+
                     service.Configuration.Add(configItem);
                 }
             }
@@ -311,29 +312,101 @@ namespace Tye2.Core.DockerCompose
                 }
             }
         }
-
+        
         private static void ParsePortSequence(YamlSequenceNode portSequence, ConfigService service)
         {
             foreach (var port in portSequence)
             {
                 var portString = YamlParser.GetScalarValue(port);
-                var binding = new ConfigServiceBinding();
-                if (portString.Contains(':'))
-                {
-                    var ports = portString.Split(':');
-                    binding.Port = int.Parse(ports[0]);
-                    binding.ContainerPort = int.Parse(ports[1]);
-                }
-                else
-                {
-                    binding.Port = int.Parse(portString);
-                    binding.ContainerPort = int.Parse(portString);
-                }
+                var parts = portString.Split(':');
 
-                // TODO how to specify protocol with docker compose. Using http for now.
-                binding.Protocol = "http";
-                service.Bindings.Add(binding);
+                switch (parts.Length)
+                {
+                    case 1:
+                        ParsePortBindings(port, null, parts[0], parts[0], service, portString);
+                        break;
+                    case 2:
+                        ParsePortBindings(port, null, parts[0], parts[1], service, portString);
+                        break;
+                    case 3:
+                        ParsePortBindings(port, parts[0], parts[1], parts[2], service, portString);
+                        break;
+                    default:
+                        throw new TyeYamlException(port.Start, $"Unsupported docker-compose port format '{portString}'.");
+                }
             }
+        }
+
+        private static void ParsePortBindings(
+            YamlNode portNode,
+            string? host,
+            string externalSegment,
+            string containerSegment,
+            ConfigService service,
+            string originalPortString)
+        {
+            if (!TryParsePortSegment(externalSegment, out var externalStart, out var externalEnd) ||
+                !TryParsePortSegment(containerSegment, out var containerStart, out var containerEnd))
+            {
+                throw new TyeYamlException(portNode.Start, $"Unsupported docker-compose port format '{originalPortString}'.");
+            }
+
+            if (externalEnd < externalStart || containerEnd < containerStart)
+            {
+                throw new TyeYamlException(portNode.Start, $"Port ranges must be ascending in '{originalPortString}'.");
+            }
+
+            var externalCount = externalEnd - externalStart;
+            var containerCount = containerEnd - containerStart;
+
+            if (externalCount != containerCount)
+            {
+                throw new TyeYamlException(portNode.Start, $"Port range counts must match in '{originalPortString}'.");
+            }
+
+            for (var offset = 0; offset <= externalCount; offset++)
+            {
+                AddPortBinding(service, host, externalStart + offset, containerStart + offset);
+            }
+        }
+
+        private static bool TryParsePortSegment(string segment, out int start, out int end)
+        {
+            var bounds = segment.Split('-');
+            if (bounds.Length == 1)
+            {
+                if (int.TryParse(bounds[0], out var single))
+                {
+                    start = single;
+                    end = single;
+                    return true;
+                }
+            }
+            else if (bounds.Length == 2)
+            {
+                if (int.TryParse(bounds[0], out var rangeStart) && int.TryParse(bounds[1], out var rangeEnd))
+                {
+                    start = rangeStart;
+                    end = rangeEnd;
+                    return true;
+                }
+            }
+
+            start = default;
+            end = default;
+            return false;
+        }
+
+        private static void AddPortBinding(ConfigService service, string? host, int externalPort, int containerPort)
+        {
+            service.Bindings.Add(new ConfigServiceBinding()
+            {
+                Host = string.IsNullOrWhiteSpace(host) ? null : host,
+                Port = externalPort,
+                ContainerPort = containerPort,
+                // TODO how to specify protocol with docker compose. Using http for now.
+                Protocol = "http",
+            });
         }
 
         private static void ParseVolumes(YamlMappingNode node, ConfigApplication app)
@@ -415,11 +488,14 @@ namespace Tye2.Core.DockerCompose
                                 service.Project = projs[0];
                                 break;
                             }
+
                             if (projs.Length > 1)
                             {
-                                throw new TyeYamlException("Multiple proj files found in directory, have only a single proj file in the context directory.");
+                                throw new TyeYamlException(
+                                    "Multiple proj files found in directory, have only a single proj file in the context directory.");
                             }
                         }
+
                         // check if folder has proj file, and use that.
                         break;
                     case "dockerfile":
@@ -450,3 +526,5 @@ namespace Tye2.Core.DockerCompose
         //}
     }
 }
+
+
