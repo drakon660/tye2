@@ -1,4 +1,5 @@
-﻿using Tye2.Hosting.Ansi2Html;
+using AwesomeAssertions;
+using Tye2.Hosting.Ansi2Html;
 using Xunit;
 
 namespace Tye2.UnitTests;
@@ -16,6 +17,9 @@ public class Ansi2HtmlConverterTests
 
         var actual = converter.Parse(input);
 
-        Assert.Equal(expected, actual);
+        actual.Should().Be(expected);
     }
 }
+
+
+

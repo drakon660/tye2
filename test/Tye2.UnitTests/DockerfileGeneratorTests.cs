@@ -1,3 +1,4 @@
+using AwesomeAssertions;
 using System;
 using System.CommandLine;
 using System.CommandLine.IO;
@@ -79,14 +80,14 @@ namespace Tye2.UnitTests
         [InlineData("1.0", false)]
         public void TagIs50OrNewer_ReturnsExpectedResult(string tag, bool expected)
         {
-            Assert.Equal(expected, DockerfileGenerator.TagIs50OrNewer(tag));
+            DockerfileGenerator.TagIs50OrNewer(tag).Should().Be(expected);
         }
 
         [Fact]
         public void TagIs50OrNewer_InvalidTag_ThrowsCommandException()
         {
-            var ex = Assert.Throws<CommandException>(() => DockerfileGenerator.TagIs50OrNewer("not-a-version"));
-            Assert.Contains("not-a-version", ex.Message);
+            var ex = ((Action)(() => DockerfileGenerator.TagIs50OrNewer("not-a-version"))).Should().Throw<CommandException>().Which;
+            ex.Message.Should().Contain("not-a-version");
         }
 
         // =====================================================================
@@ -99,9 +100,8 @@ namespace Tye2.UnitTests
             var project = CreateProject();
             var container = new ContainerInfo();
 
-            var ex = Assert.Throws<ArgumentNullException>(() =>
-                DockerfileGenerator.ApplyContainerDefaults(null!, project, container));
-            Assert.Equal("application", ex.ParamName);
+            var ex = ((Action)(() => DockerfileGenerator.ApplyContainerDefaults(null!, project, container))).Should().Throw<ArgumentNullException>().Which;
+            ex.ParamName.Should().Be("application");
         }
 
         [Fact]
@@ -110,9 +110,8 @@ namespace Tye2.UnitTests
             var app = CreateApp();
             var container = new ContainerInfo();
 
-            var ex = Assert.Throws<ArgumentNullException>(() =>
-                DockerfileGenerator.ApplyContainerDefaults(app, (DotnetProjectServiceBuilder)null!, container));
-            Assert.Equal("project", ex.ParamName);
+            var ex = ((Action)(() => DockerfileGenerator.ApplyContainerDefaults(app, (DotnetProjectServiceBuilder)null!, container))).Should().Throw<ArgumentNullException>().Which;
+            ex.ParamName.Should().Be("project");
         }
 
         [Fact]
@@ -121,9 +120,8 @@ namespace Tye2.UnitTests
             var app = CreateApp();
             var project = CreateProject();
 
-            var ex = Assert.Throws<ArgumentNullException>(() =>
-                DockerfileGenerator.ApplyContainerDefaults(app, project, null!));
-            Assert.Equal("container", ex.ParamName);
+            var ex = ((Action)(() => DockerfileGenerator.ApplyContainerDefaults(app, project, null!))).Should().Throw<ArgumentNullException>().Which;
+            ex.ParamName.Should().Be("container");
         }
 
         // =====================================================================
@@ -139,7 +137,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("3.1", container.BaseImageTag);
+            container.BaseImageTag.Should().Be("3.1");
         }
 
         [Fact]
@@ -151,7 +149,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("8.0", container.BaseImageTag);
+            container.BaseImageTag.Should().Be("8.0");
         }
 
         [Fact]
@@ -163,7 +161,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("7.0", container.BaseImageTag);
+            container.BaseImageTag.Should().Be("7.0");
         }
 
         [Fact]
@@ -176,9 +174,8 @@ namespace Tye2.UnitTests
                 targetFramework: "netstandard2.0");
             var container = new ContainerInfo();
 
-            var ex = Assert.Throws<CommandException>(() =>
-                DockerfileGenerator.ApplyContainerDefaults(app, project, container));
-            Assert.Contains("netstandard2.0", ex.Message);
+            var ex = ((Action)(() => DockerfileGenerator.ApplyContainerDefaults(app, project, container))).Should().Throw<CommandException>().Which;
+            ex.Message.Should().Contain("netstandard2.0");
         }
 
         // =====================================================================
@@ -203,7 +200,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal(expectedImage, container.BaseImageName);
+            container.BaseImageName.Should().Be(expectedImage);
         }
 
         [Fact]
@@ -215,7 +212,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("my-custom-image", container.BaseImageName);
+            container.BaseImageName.Should().Be("my-custom-image");
         }
 
         // =====================================================================
@@ -236,7 +233,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal(expectedSdk, container.BuildImageName);
+            container.BuildImageName.Should().Be(expectedSdk);
         }
 
         [Fact]
@@ -248,7 +245,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("8.0", container.BuildImageTag);
+            container.BuildImageTag.Should().Be("8.0");
         }
 
         [Fact]
@@ -260,7 +257,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("7.0", container.BuildImageTag);
+            container.BuildImageTag.Should().Be("7.0");
         }
 
         [Fact]
@@ -272,7 +269,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("my-sdk", container.BuildImageName);
+            container.BuildImageName.Should().Be("my-sdk");
         }
 
         // =====================================================================
@@ -288,7 +285,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("myservice", container.ImageName);
+            container.ImageName.Should().Be("myservice");
         }
 
         [Fact]
@@ -301,7 +298,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("myregistry.azurecr.io/myservice", container.ImageName);
+            container.ImageName.Should().Be("myregistry.azurecr.io/myservice");
         }
 
         [Fact]
@@ -313,7 +310,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("custom-name", container.ImageName);
+            container.ImageName.Should().Be("custom-name");
         }
 
         [Fact]
@@ -325,7 +322,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("1.2.3", container.ImageTag);
+            container.ImageTag.Should().Be("1.2.3");
         }
 
         [Fact]
@@ -337,7 +334,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("1.0.0-build123", container.ImageTag);
+            container.ImageTag.Should().Be("1.0.0-build123");
         }
 
         [Fact]
@@ -349,7 +346,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("latest", container.ImageTag);
+            container.ImageTag.Should().Be("latest");
         }
 
         [Fact]
@@ -361,7 +358,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("my-tag", container.ImageTag);
+            container.ImageTag.Should().Be("my-tag");
         }
 
         // =====================================================================
@@ -377,9 +374,8 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            var envVar = Assert.Single(project.EnvironmentVariables.Where(
-                e => e.Name == "DOTNET_LOGGING__CONSOLE__DISABLECOLORS"));
-            Assert.Equal("true", envVar.Value);
+            var envVar = project.EnvironmentVariables.Should().ContainSingle(e => e.Name == "DOTNET_LOGGING__CONSOLE__DISABLECOLORS").Subject;
+            envVar.Value.Should().Be("true");
         }
 
         // =====================================================================
@@ -403,12 +399,12 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("custom-base", container.BaseImageName);
-            Assert.Equal("7.0", container.BaseImageTag);
-            Assert.Equal("custom-sdk", container.BuildImageName);
-            Assert.Equal("6.0", container.BuildImageTag);
-            Assert.Equal("custom-image", container.ImageName);
-            Assert.Equal("custom-tag", container.ImageTag);
+            container.BaseImageName.Should().Be("custom-base");
+            container.BaseImageTag.Should().Be("7.0");
+            container.BuildImageName.Should().Be("custom-sdk");
+            container.BuildImageTag.Should().Be("6.0");
+            container.ImageName.Should().Be("custom-image");
+            container.ImageTag.Should().Be("custom-tag");
         }
 
         // =====================================================================
@@ -424,7 +420,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, dockerSvc, container);
 
-            Assert.Equal("myapp", container.ImageName);
+            container.ImageName.Should().Be("myapp");
         }
 
         [Fact]
@@ -437,7 +433,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, dockerSvc, container);
 
-            Assert.Equal("registry.io/myapp", container.ImageName);
+            container.ImageName.Should().Be("registry.io/myapp");
         }
 
         [Fact]
@@ -449,7 +445,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, dockerSvc, container);
 
-            Assert.Equal("latest", container.ImageTag);
+            container.ImageTag.Should().Be("latest");
         }
 
         [Fact]
@@ -461,7 +457,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, dockerSvc, container);
 
-            Assert.Equal("v2", container.ImageTag);
+            container.ImageTag.Should().Be("v2");
         }
 
         [Fact]
@@ -473,7 +469,7 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, dockerSvc, container);
 
-            Assert.Equal("custom", container.ImageName);
+            container.ImageName.Should().Be("custom");
         }
 
         // =====================================================================
@@ -487,9 +483,8 @@ namespace Tye2.UnitTests
             var project = CreateProject();
             var container = new ContainerInfo();
 
-            var ex = await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                DockerfileGenerator.WriteDockerfileAsync(null!, app, project, container, "file.txt"));
-            Assert.Equal("output", ex.ParamName);
+            var ex = (await ((Func<Task>)(() => DockerfileGenerator.WriteDockerfileAsync(null!, app, project, container, "file.txt"))).Should().ThrowAsync<ArgumentNullException>()).Which;
+            ex.ParamName.Should().Be("output");
         }
 
         [Fact]
@@ -498,9 +493,8 @@ namespace Tye2.UnitTests
             var project = CreateProject();
             var container = new ContainerInfo();
 
-            var ex = await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                DockerfileGenerator.WriteDockerfileAsync(_output, null!, project, container, "file.txt"));
-            Assert.Equal("application", ex.ParamName);
+            var ex = (await ((Func<Task>)(() => DockerfileGenerator.WriteDockerfileAsync(_output, null!, project, container, "file.txt"))).Should().ThrowAsync<ArgumentNullException>()).Which;
+            ex.ParamName.Should().Be("application");
         }
 
         [Fact]
@@ -509,9 +503,8 @@ namespace Tye2.UnitTests
             var app = CreateApp();
             var container = new ContainerInfo();
 
-            var ex = await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                DockerfileGenerator.WriteDockerfileAsync(_output, app, null!, container, "file.txt"));
-            Assert.Equal("project", ex.ParamName);
+            var ex = (await ((Func<Task>)(() => DockerfileGenerator.WriteDockerfileAsync(_output, app, null!, container, "file.txt"))).Should().ThrowAsync<ArgumentNullException>()).Which;
+            ex.ParamName.Should().Be("project");
         }
 
         [Fact]
@@ -520,9 +513,8 @@ namespace Tye2.UnitTests
             var app = CreateApp();
             var project = CreateProject();
 
-            var ex = await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                DockerfileGenerator.WriteDockerfileAsync(_output, app, project, null!, "file.txt"));
-            Assert.Equal("container", ex.ParamName);
+            var ex = (await ((Func<Task>)(() => DockerfileGenerator.WriteDockerfileAsync(_output, app, project, null!, "file.txt"))).Should().ThrowAsync<ArgumentNullException>()).Which;
+            ex.ParamName.Should().Be("container");
         }
 
         [Fact]
@@ -532,9 +524,8 @@ namespace Tye2.UnitTests
             var project = CreateProject();
             var container = new ContainerInfo();
 
-            var ex = await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, null!));
-            Assert.Equal("filePath", ex.ParamName);
+            var ex = (await ((Func<Task>)(() => DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, null!))).Should().ThrowAsync<ArgumentNullException>()).Which;
+            ex.ParamName.Should().Be("filePath");
         }
 
         // =====================================================================
@@ -559,14 +550,14 @@ namespace Tye2.UnitTests
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
             var content = await File.ReadAllTextAsync(filePath);
-            Assert.Contains("FROM mcr.microsoft.com/dotnet/sdk:8.0 as SDK", content);
-            Assert.Contains("WORKDIR /src", content);
-            Assert.Contains("COPY . .", content);
-            Assert.Contains("RUN dotnet publish -c Release -o /out", content);
-            Assert.Contains("FROM mcr.microsoft.com/dotnet/aspnet:8.0 as RUNTIME", content);
-            Assert.Contains("WORKDIR /app", content);
-            Assert.Contains("COPY --from=SDK /out .", content);
-            Assert.Contains("ENTRYPOINT [\"dotnet\", \"WebApp.dll\"]", content);
+            content.Should().Contain("FROM mcr.microsoft.com/dotnet/sdk:8.0 as SDK");
+            content.Should().Contain("WORKDIR /src");
+            content.Should().Contain("COPY . .");
+            content.Should().Contain("RUN dotnet publish -c Release -o /out");
+            content.Should().Contain("FROM mcr.microsoft.com/dotnet/aspnet:8.0 as RUNTIME");
+            content.Should().Contain("WORKDIR /app");
+            content.Should().Contain("COPY --from=SDK /out .");
+            content.Should().Contain("ENTRYPOINT [\"dotnet\", \"WebApp.dll\"]");
         }
 
         [Fact]
@@ -587,7 +578,7 @@ namespace Tye2.UnitTests
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
             var content = await File.ReadAllTextAsync(filePath);
-            Assert.Contains("CMD [\"--urls http://+:80\"]", content);
+            content.Should().Contain("CMD [\"--urls http://+:80\"]");
         }
 
         [Fact]
@@ -608,7 +599,7 @@ namespace Tye2.UnitTests
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
             var content = await File.ReadAllTextAsync(filePath);
-            Assert.DoesNotContain("CMD", content);
+            content.Should().NotContain("CMD");
         }
 
         [Fact]
@@ -629,8 +620,8 @@ namespace Tye2.UnitTests
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
             var content = await File.ReadAllTextAsync(filePath);
-            Assert.Contains("as SDK", content);
-            Assert.Contains("as RUNTIME", content);
+            content.Should().Contain("as SDK");
+            content.Should().Contain("as RUNTIME");
         }
 
         // =====================================================================
@@ -653,12 +644,12 @@ namespace Tye2.UnitTests
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
             var content = await File.ReadAllTextAsync(filePath);
-            Assert.Contains("FROM mcr.microsoft.com/dotnet/runtime:8.0", content);
-            Assert.Contains("WORKDIR /app", content);
-            Assert.Contains("COPY . /app", content);
-            Assert.Contains("ENTRYPOINT [\"dotnet\", \"WorkerApp.dll\"]", content);
-            Assert.DoesNotContain("as SDK", content);
-            Assert.DoesNotContain("as RUNTIME", content);
+            content.Should().Contain("FROM mcr.microsoft.com/dotnet/runtime:8.0");
+            content.Should().Contain("WORKDIR /app");
+            content.Should().Contain("COPY . /app");
+            content.Should().Contain("ENTRYPOINT [\"dotnet\", \"WorkerApp.dll\"]");
+            content.Should().NotContain("as SDK");
+            content.Should().NotContain("as RUNTIME");
         }
 
         [Fact]
@@ -677,7 +668,7 @@ namespace Tye2.UnitTests
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
             var content = await File.ReadAllTextAsync(filePath);
-            Assert.Contains("CMD [\"--verbose\"]", content);
+            content.Should().Contain("CMD [\"--verbose\"]");
         }
 
         [Fact]
@@ -696,7 +687,7 @@ namespace Tye2.UnitTests
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
             var content = await File.ReadAllTextAsync(filePath);
-            Assert.DoesNotContain("CMD", content);
+            content.Should().NotContain("CMD");
         }
 
         [Fact]
@@ -715,7 +706,7 @@ namespace Tye2.UnitTests
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
             var content = await File.ReadAllTextAsync(filePath);
-            Assert.DoesNotContain("CMD", content);
+            content.Should().NotContain("CMD");
         }
 
         // =====================================================================
@@ -739,9 +730,9 @@ namespace Tye2.UnitTests
 
             var bytes = await File.ReadAllBytesAsync(filePath);
             // UTF8 BOM is 0xEF, 0xBB, 0xBF
-            Assert.True(bytes.Length >= 3, "File should have content");
+            (bytes.Length >= 3).Should().BeTrue("File should have content");
             var hasBom = bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
-            Assert.False(hasBom, "Dockerfile should not have UTF-8 BOM");
+            hasBom.Should().BeFalse("Dockerfile should not have UTF-8 BOM");
         }
 
         // =====================================================================
@@ -760,8 +751,8 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("mcr.microsoft.com/dotnet/core/aspnet", container.BaseImageName);
-            Assert.Equal("mcr.microsoft.com/dotnet/core/sdk", container.BuildImageName);
+            container.BaseImageName.Should().Be("mcr.microsoft.com/dotnet/core/aspnet");
+            container.BuildImageName.Should().Be("mcr.microsoft.com/dotnet/core/sdk");
         }
 
         [Fact]
@@ -776,8 +767,13 @@ namespace Tye2.UnitTests
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            Assert.Equal("mcr.microsoft.com/dotnet/runtime", container.BaseImageName);
-            Assert.Equal("mcr.microsoft.com/dotnet/sdk", container.BuildImageName);
+            container.BaseImageName.Should().Be("mcr.microsoft.com/dotnet/runtime");
+            container.BuildImageName.Should().Be("mcr.microsoft.com/dotnet/sdk");
         }
     }
 }
+
+
+
+
+
