@@ -8,7 +8,11 @@
       "Bash(dotnet --version)",
       "Bash(find test/Tye2.E2ETests/testassets -name \"*.csproj\" 2>/dev/null | head -20)",
       "Bash(dotnet --list-sdks)",
-      "Bash(dotnet --list-runtimes | grep \"Microsoft.NETCore.App\")"
+      "Bash(dotnet --list-runtimes | grep \"Microsoft.NETCore.App\")",
+      "Bash(dotnet script:*)",
+      "Bash(find /f/src/tye2/test -name \"*Dapr*\" -type f 2>/dev/null | head -20)",
+      "Bash(find /f/src/tye2/test -path \"*/bin\" -prune -o -name \"*Extension*Test*.cs\" -type f -print 2>/dev/null | head -20)",
+      "Bash(find /f/src/tye2/test/Tye2.E2ETests/testassets/projects/dapr* -name \"*.yaml\" -o -name \"*.yml\" 2>/dev/null)"
     ]
   }
 }
