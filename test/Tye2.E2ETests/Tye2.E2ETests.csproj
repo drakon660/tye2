@@ -41,4 +41,8 @@
     <Compile Include="..\..\src\shared\KubectlDetector.cs" Link="KubectlDetector.cs"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="testassets\projects\process-util\" />
+  </ItemGroup>
+
 </Project>
