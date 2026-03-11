@@ -3,7 +3,7 @@
 ## Current State
 
 ### Test Projects
-- **Tye2.UnitTests** — 716 tests across 39 test files (up from 5 files originally)
+- **Tye2.UnitTests** — 799 tests across 43 test files (up from 5 files originally)
 - **Tye2.E2ETests** — 27+ integration tests (require Docker, slow)
 - **Tye2.Extensions.Configuration.Tests** — configuration extension tests
 
@@ -13,6 +13,7 @@ Phase 2 (Runtime Infrastructure) — PortAssigner, ReplicaRegistry.
 Phase 3 (Extensions) — Zipkin, Seq, Elastic, DiagnosticAgent, DaprExtensionConfigurationReader.
 Phase 4 (Utilities) — ArgumentEscaper, NameInferer, ConfigFileFinder, OutputContext.
 Phase 5 (Coverage-driven) — **complete**. SolutionFile parser, ContainerEngine detection.
+Phase 7 (Testable utilities) — **complete**. ProjectReader, GitDetector, NextPortFinder, TempDirectory.
 
 ---
 
@@ -33,6 +34,7 @@ Phase 5 (Coverage-driven) — **complete**. SolutionFile parser, ContainerEngine
 |-----------|-------------|-------|----------|
 | PortAssigner | `PortAssignerTests.cs` | 15 | Skip without RunInfo, auto-assign ports, preserve existing, replica mapping, readiness proxy, HTTP/HTTPS container port defaults, multiple bindings/services, edge cases |
 | ReplicaRegistry | `ReplicaRegistryTests.cs` | 17 | Write/read/delete events, JSON serialization, separate stores, dispose cleanup, roundtrip, concurrent writes |
+| ProcessRunner | `ProcessRunnerTests.cs` | 36 | ProcessRunnerOptions (defaults, constants, ShouldDebugService, ShouldWatchService, FromHostOptions), ProcessRunner constructor, KillProcessAsync, Service.State (Unknown/Started/Starting/Stopped/Failed/Degraded), ServiceType, CachedLogs, Restarts |
 
 ## Covered — Extensions (Phase 3 partial)
 
@@ -54,6 +56,10 @@ Phase 5 (Coverage-driven) — **complete**. SolutionFile parser, ContainerEngine
 | ConfigFileFinder | `ConfigFileFinderTests.cs` | 14 | tye.yaml/yml, docker-compose, .csproj/.fsproj/.sln, priority order, empty dir, multiple matches, custom formats |
 | SolutionFile parser | `SolutionFileTests.cs` | 28 | Single/multi/mixed project parsing, project types (C#/F#/folder), GUIDs, relative/absolute paths, configurations, nested projects, solution folders, solution filters (.slnf), IsBuildableProject, version detection, error handling |
 | ContainerEngine | `ContainerEngineTests.cs` | 15 | Auto-detect, explicit Docker/Podman, IsUsable, ContainerHost, AspNetUrlsHost, IsPodman, CommandName throw on unusable, s_default singleton override, ContainerEngineType enum |
+| ProjectReader | `ProjectReaderTests.cs` | 26 | EnumerateProjects for .csproj/.fsproj and solution-folder filtering; metadata parsing for version/TFM/frameworks/base image; path normalization; Azure Functions metadata parsing and null-guard exceptions |
+| GitDetector | `GitDetectorTests.cs` | 5 | Singleton instance, IsGitInstalled lazy detection, repeated call consistency |
+| NextPortFinder | `NextPortFinderTests.cs` | 6 | Port range validation, uniqueness, availability, ephemeral range |
+| TempDirectory | `TempDirectoryTests.cs` | 10 | Create, directory exists, absolute path, dispose cleanup (files, subdirs), constructor, temp path location |
 
 ## Covered — Pre-existing Tests
 
@@ -103,10 +109,10 @@ Many are test infrastructure, generated code, or obj/ artifacts. Key uncovered p
 - [ ] **Secret validation test** — requires Kubernetes cluster (deferred)
 
 ### Phase 7 — Remaining testable utilities
-- [ ] **ProjectReader** — enumerates projects from .sln, extracts TFM/version info (pure logic)
-- [ ] **GitDetector** — singleton git detection (similar pattern to ContainerEngine)
-- [ ] **NextPortFinder** — port allocation logic
-- [ ] **TempDirectory / DirectoryCopy** — filesystem helpers
+- [x] **ProjectReader** — 26 tests covering project enumeration + metadata parsing (version/TFM/frameworks/Azure Functions) ✓
+- [x] **GitDetector** — 5 tests: singleton, lazy detection, consistency ✓
+- [x] **NextPortFinder** — 6 tests: range, uniqueness, availability ✓
+- [x] **TempDirectory** — 10 tests: create, dispose cleanup, paths ✓
 
 ### Phase 8 — Hard-to-test components (if needed)
 - [ ] **Dapr extension** — largest extension, process dependency
@@ -139,6 +145,7 @@ Many are test infrastructure, generated code, or obj/ artifacts. Key uncovered p
 
 ### Lower Priority — Utilities (untested)
 
-- NextPortFinder, ProjectReader, GitDetector, TempDirectory, DirectoryCopy
-- ConsoleExtensions, ProcessExtensions
+- DirectoryCopy, ConsoleExtensions, ProcessExtensions
 - CLI commands (`Program.*.cs` files, ~500+ lines)
+
+

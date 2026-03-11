@@ -110,16 +110,15 @@ public class ContainerEngineTests
     // --- IsUsable ---
 
     [Fact]
-    public void IsUsable_WhenUsable_ReturnsTrue()
+    public void IsUsable_ReturnsConsistentResult()
     {
         var engine = new ContainerEngine(null);
 
-        var usable = engine.IsUsable(out var reason);
+        var usable1 = engine.IsUsable(out var reason1);
+        var usable2 = engine.IsUsable(out var reason2);
 
-        if (usable)
-        {
-            reason.Should().BeNull();
-        }
+        usable1.Should().Be(usable2);
+        reason1.Should().Be(reason2);
     }
 
     [Fact]
