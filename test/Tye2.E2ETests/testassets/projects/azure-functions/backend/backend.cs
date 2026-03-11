@@ -1,37 +1,40 @@
 using System;
-using System.IO;
+using System.Net;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace backend
 {
-    public static class backend
+    public class backend
     {
-        [FunctionName("backend")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            ILogger log)
-        {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+        private readonly ILogger _logger;
 
-            var backendInfo = new BackendInfo()
+        public backend(ILoggerFactory loggerFactory)
+        {
+            _logger = loggerFactory.CreateLogger<backend>();
+        }
+
+        [Function("backend")]
+        public async Task<HttpResponseData> Run(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        {
+            _logger.LogInformation("C# HTTP trigger function processed a request.");
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(new BackendInfo
             {
-                IP = req.HttpContext.Connection.LocalIpAddress.ToString(),
+                IP = "127.0.0.1",
                 Hostname = System.Net.Dns.GetHostName(),
-            };
-            
-            return new OkObjectResult(backendInfo);
+            });
+
+            return response;
         }
 
         class BackendInfo
         {
             public string IP { get; set; } = default!;
-
             public string Hostname { get; set; } = default!;
         }
     }

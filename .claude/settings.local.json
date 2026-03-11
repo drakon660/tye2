@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dotnet test:*)"
+      "Bash(dotnet test:*)",
+      "Bash(grep:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet --version)",
+      "Bash(find test/Tye2.E2ETests/testassets -name \"*.csproj\" 2>/dev/null | head -20)",
+      "Bash(dotnet --list-sdks)",
+      "Bash(dotnet --list-runtimes | grep \"Microsoft.NETCore.App\")"
     ]
   }
 }
