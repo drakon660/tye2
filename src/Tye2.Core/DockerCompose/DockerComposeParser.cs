@@ -130,11 +130,15 @@ namespace Tye2.Core.DockerCompose
                     case "version":
                         break;
                     case "volumes":
+                        ThrowIfNotYamlMapping(child.Value);
+                        ParseVolumes((YamlMappingNode)child.Value);
                         break;
                     case "services":
                         ParseServiceList((child.Value as YamlMappingNode)!, app);
                         break;
                     case "networks":
+                        ThrowIfNotYamlMapping(child.Value);
+                        ParseNetworks((YamlMappingNode)child.Value);
                         break;
                     case "configs":
                         break;
@@ -451,58 +455,82 @@ namespace Tye2.Core.DockerCompose
             }
         }
 
-        private static void ParseVolumes(YamlMappingNode node, ConfigApplication app)
+        private static void ParseVolumes(YamlMappingNode node)
         {
-            foreach (var child in node.Children)
+            foreach (var volumeEntry in node.Children)
             {
-                var key = YamlParser.GetScalarValue(child.Key);
-
-                switch (key)
+                // docker-compose allows shorthand like:
+                // volumes:
+                //   data:
+                if (volumeEntry.Value is YamlScalarNode)
                 {
-                    case "driver":
-                        break;
-                    case "driver_opts":
-                        break;
-                    case "external":
-                        break;
-                    case "labels":
-                        break;
-                    case "name":
-                        break;
-                    default:
-                        throw new TyeYamlException(child.Key.Start, CoreStrings.FormatUnrecognizedKey(key));
+                    continue;
+                }
+
+                ThrowIfNotYamlMapping(volumeEntry.Value);
+                foreach (var option in ((YamlMappingNode)volumeEntry.Value).Children)
+                {
+                    var key = YamlParser.GetScalarValue(option.Key);
+
+                    switch (key)
+                    {
+                        case "driver":
+                            break;
+                        case "driver_opts":
+                            break;
+                        case "external":
+                            break;
+                        case "labels":
+                            break;
+                        case "name":
+                            break;
+                        default:
+                            throw new TyeYamlException(option.Key.Start, CoreStrings.FormatUnrecognizedKey(key));
+                    }
                 }
             }
         }
 
-        private static void ParseNetworks(YamlMappingNode node, ConfigApplication app)
+        private static void ParseNetworks(YamlMappingNode node)
         {
-            foreach (var child in node.Children)
+            foreach (var networkEntry in node.Children)
             {
-                var key = YamlParser.GetScalarValue(child.Key);
-
-                switch (key)
+                // docker-compose allows shorthand like:
+                // networks:
+                //   frontend:
+                if (networkEntry.Value is YamlScalarNode)
                 {
-                    case "driver":
-                        break;
-                    case "driver_opts":
-                        break;
-                    case "attachable":
-                        break;
-                    case "enable_ipv6":
-                        break;
-                    case "ipam":
-                        break;
-                    case "internal":
-                        break;
-                    case "external":
-                        break;
-                    case "labels":
-                        break;
-                    case "name":
-                        break;
-                    default:
-                        throw new TyeYamlException(child.Key.Start, CoreStrings.FormatUnrecognizedKey(key));
+                    continue;
+                }
+
+                ThrowIfNotYamlMapping(networkEntry.Value);
+                foreach (var option in ((YamlMappingNode)networkEntry.Value).Children)
+                {
+                    var key = YamlParser.GetScalarValue(option.Key);
+
+                    switch (key)
+                    {
+                        case "driver":
+                            break;
+                        case "driver_opts":
+                            break;
+                        case "attachable":
+                            break;
+                        case "enable_ipv6":
+                            break;
+                        case "ipam":
+                            break;
+                        case "internal":
+                            break;
+                        case "external":
+                            break;
+                        case "labels":
+                            break;
+                        case "name":
+                            break;
+                        default:
+                            throw new TyeYamlException(option.Key.Start, CoreStrings.FormatUnrecognizedKey(key));
+                    }
                 }
             }
         }
@@ -568,6 +596,3 @@ namespace Tye2.Core.DockerCompose
         //}
     }
 }
-
-
-

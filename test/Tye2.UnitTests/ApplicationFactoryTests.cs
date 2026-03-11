@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.CommandLine.IO;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using AwesomeAssertions;
 using Tye2.Core;
@@ -35,6 +36,19 @@ namespace Tye2.UnitTests
         private FileInfo CreateTyeYaml(string content, string fileName = "tye.yaml")
         {
             var path = Path.Combine(_tempDir, fileName);
+            File.WriteAllText(path, content);
+            return new FileInfo(path);
+        }
+
+        private FileInfo CreateFile(string relativePath, string content = "")
+        {
+            var path = Path.Combine(_tempDir, relativePath);
+            var directory = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
             File.WriteAllText(path, content);
             return new FileInfo(path);
         }
@@ -947,5 +961,273 @@ services:
             container.Readiness.Should().NotBeNull();
             app.Services.Single().Bindings.Should().ContainSingle();
         }
+        // =====================================================================
+        // Executable Services
+        // =====================================================================
+
+        [Fact]
+        public async Task CreateAsync_ExecutableService_DllPath_IsResolvedToAbsoluteAndSetsWorkingDirectory()
+        {
+            var dll = CreateFile("tools/worker.dll");
+            var file = CreateTyeYaml(@"
+name: exe-dll-app
+services:
+  - name: worker
+    executable: tools/worker.dll
+");
+
+            var app = await ApplicationFactory.CreateAsync(_output, file);
+            var executable = app.Services.Should().ContainSingle().Subject
+                .Should().BeOfType<ExecutableServiceBuilder>().Subject;
+
+            executable.Executable.Should().Be(dll.FullName);
+            executable.WorkingDirectory.Should().Be(Path.GetDirectoryName(dll.FullName));
+            executable.Replicas.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task CreateAsync_ExecutableService_WithWorkingDirectory_IsResolvedToAbsolutePath()
+        {
+            CreateFile("scripts/worker.sh");
+            Directory.CreateDirectory(Path.Combine(_tempDir, "work-dir"));
+
+            var file = CreateTyeYaml(@"
+name: exe-working-dir
+services:
+  - name: worker
+    executable: scripts/worker.sh
+    workingDirectory: work-dir
+");
+
+            var app = await ApplicationFactory.CreateAsync(_output, file);
+            var executable = app.Services.Should().ContainSingle().Subject
+                .Should().BeOfType<ExecutableServiceBuilder>().Subject;
+
+            executable.Executable.Should().Be("scripts/worker.sh");
+            executable.WorkingDirectory.Should().Be(Path.Combine(_tempDir, "work-dir"));
+        }
+
+        [Fact]
+        public async Task CreateAsync_ExecutableService_WithEnvironmentVariables()
+        {
+            var file = CreateTyeYaml(@"
+name: exe-env
+services:
+  - name: worker
+    executable: worker.exe
+    env:
+      - name: MODE
+        value: test
+");
+
+            var app = await ApplicationFactory.CreateAsync(_output, file);
+            var executable = app.Services.Should().ContainSingle().Subject
+                .Should().BeOfType<ExecutableServiceBuilder>().Subject;
+
+            executable.EnvironmentVariables.Should().ContainSingle(e => e.Name == "MODE" && e.Value == "test");
+        }
+
+        [Fact]
+        public async Task CreateAsync_ExecutableService_WithVolume_ThrowsCommandException()
+        {
+            var file = CreateTyeYaml(@"
+name: exe-vol
+services:
+  - name: worker
+    executable: worker.exe
+    volumes:
+      - name: data
+        target: /data
+");
+
+            var act = () => ApplicationFactory.CreateAsync(_output, file);
+            await act.Should().ThrowAsync<CommandException>()
+                .WithMessage("*Executable services do not support volumes*");
+        }
+
+        // =====================================================================
+        // Dockerfile Services
+        // =====================================================================
+
+        [Fact]
+        public async Task CreateAsync_DockerFileService_WithBuildArgsAndContext_MapsProperties()
+        {
+            var dockerfile = CreateFile("docker/Dockerfile", "FROM mcr.microsoft.com/dotnet/runtime:8.0");
+            var file = CreateTyeYaml(@"
+name: dockerfile-app
+services:
+  - name: docker-api
+
+    dockerFile: docker/Dockerfile
+    dockerFileContext: docker/
+    dockerFileArgs:
+      - VERSION: 1.2.3
+      - FLAVOR: slim
+    build: false
+    replicas: 2
+    env:
+      - name: ASPNETCORE_ENVIRONMENT
+        value: Development
+    volumes:
+      - name: cache
+        target: /cache
+");
+
+            var app = await ApplicationFactory.CreateAsync(_output, file);
+            var dockerService = app.Services.Should().ContainSingle().Subject
+                .Should().BeOfType<DockerFileServiceBuilder>().Subject;
+
+            dockerService.Build.Should().BeFalse();
+            dockerService.Replicas.Should().Be(2);
+            dockerService.DockerFile!.Replace('\\', '/').Should().Be(dockerfile.FullName.Replace('\\', '/'));
+            dockerService.BuildArgs.Should().ContainKey("VERSION").WhoseValue.Should().Be("1.2.3");
+            dockerService.BuildArgs.Should().ContainKey("FLAVOR").WhoseValue.Should().Be("slim");
+            dockerService.EnvironmentVariables.Should().ContainSingle(e => e.Name == "ASPNETCORE_ENVIRONMENT" && e.Value == "Development");
+            dockerService.Volumes.Should().ContainSingle(v => v.Name == "cache" && v.Target == "/cache");
+            dockerService.ContainerInfo.Should().NotBeNull();
+            dockerService.ManifestInfo.Should().NotBeNull();
+            dockerService.ContainerInfo!.UseMultiphaseDockerfile.Should().BeFalse();
+
+            var expectedContext = Path.Combine(_tempDir, "docker/");
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                expectedContext = Path.TrimEndingDirectorySeparator(expectedContext);
+            }
+            else if (!Path.EndsInDirectorySeparator(expectedContext))
+            {
+                expectedContext += Path.DirectorySeparatorChar;
+            }
+
+            dockerService.DockerFileContext.Should().Be(expectedContext);
+        }
+
+        // =====================================================================
+        // Include / Nested Config
+        // =====================================================================
+
+        [Fact]
+        public async Task CreateAsync_ServiceWithInclude_LoadsNestedServices()
+        {
+            CreateFile("nested/tye.yaml", @"
+name: include-app
+services:
+  - name: nested-redis
+    image: redis:7
+");
+            var file = CreateTyeYaml(@"
+name: include-app
+services:
+  - name: include-nested
+    include: nested/tye.yaml
+");
+
+            var app = await ApplicationFactory.CreateAsync(_output, file);
+            app.Services.Should().ContainSingle().Which.Name.Should().Be("nested-redis");
+        }
+
+        [Fact]
+        public async Task CreateAsync_ServiceWithInclude_DuplicateServiceInNestedConfig_DoesNotDuplicate()
+        {
+            CreateFile("nested/tye.yaml", @"
+name: include-duplicate
+services:
+  - name: redis
+    image: redis:7
+");
+            var file = CreateTyeYaml(@"
+name: include-duplicate
+services:
+  - name: redis
+    image: redis:6
+  - name: include-nested
+    include: nested/tye.yaml
+");
+
+            var app = await ApplicationFactory.CreateAsync(_output, file);
+            app.Services.Where(s => s.Name == "redis").Should().ContainSingle();
+        }
+
+        [Fact]
+        public async Task CreateAsync_ServiceWithInclude_NestedNameMismatch_ThrowsCommandException()
+        {
+            CreateFile("nested/tye.yaml", @"
+name: nested-different
+services:
+  - name: redis
+    image: redis
+");
+            var file = CreateTyeYaml(@"
+name: include-root
+services:
+  - name: include-nested
+    include: nested/tye.yaml
+");
+
+            var act = () => ApplicationFactory.CreateAsync(_output, file);
+            await act.Should().ThrowAsync<CommandException>()
+                .WithMessage("*Nested configuration must have the same \"name\"*");
+        }
+
+        // =====================================================================
+        // Repository Services
+        // =====================================================================
+
+        [Fact]
+        public async Task CreateAsync_ServiceWithRepository_UsesExistingCloneDirectory()
+        {
+            CreateFile("deps/repository-svc/tye.yaml", @"
+name: repository-app
+services:
+  - name: cloned-redis
+    image: redis
+");
+            var file = CreateTyeYaml(@"
+name: repository-app
+services:
+  - name: repository-svc
+    repository: https://example.invalid/repository.git
+    cloneDirectory: deps
+");
+
+            var app = await ApplicationFactory.CreateAsync(_output, file);
+            app.Services.Should().ContainSingle().Which.Name.Should().Be("cloned-redis");
+        }
+
+        [Fact]
+        public async Task CreateAsync_ServiceWithRepository_ExistingCloneWithoutSupportedFile_ThrowsCommandException()
+        {
+            Directory.CreateDirectory(Path.Combine(_tempDir, "deps", "repository-svc"));
+            var file = CreateTyeYaml(@"
+name: repository-app
+services:
+  - name: repository-svc
+    repository: https://example.invalid/repository.git
+    cloneDirectory: deps
+");
+
+            var act = () => ApplicationFactory.CreateAsync(_output, file);
+            await act.Should().ThrowAsync<CommandException>()
+                .WithMessage("*No project project file or solution was found*");
+        }
+
+        // =====================================================================
+        // Unknown Service Type
+        // =====================================================================
+
+        [Fact]
+        public async Task CreateAsync_UnknownServiceType_ThrowsCommandException()
+        {
+            var file = CreateTyeYaml(@"
+name: unknown-service
+services:
+  - name: service-without-type
+");
+
+            var act = () => ApplicationFactory.CreateAsync(_output, file);
+            await act.Should().ThrowAsync<CommandException>()
+                .WithMessage("*Unable to determine service type*");
+        }
     }
+
 }
+

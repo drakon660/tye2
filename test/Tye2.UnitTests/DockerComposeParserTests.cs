@@ -85,6 +85,63 @@ services:
         }
 
         // =====================================================================
+        // Scalar Helpers
+        // =====================================================================
+
+        [Fact]
+        public void GetScalarValue_ScalarNode_ReturnsValue()
+        {
+            var value = DockerComposeParser.GetScalarValue(new YamlScalarNode("hello"));
+
+            value.Should().Be("hello");
+        }
+
+        [Fact]
+        public void GetScalarValue_NonScalarNode_Throws()
+        {
+            var ex = ((Action)(() => DockerComposeParser.GetScalarValue(new YamlSequenceNode())))
+                .Should().Throw<TyeYamlException>().Which;
+
+            ex.Message.Should().Contain(CoreStrings.FormatUnexpectedType(
+                YamlNodeType.Scalar.ToString(),
+                YamlNodeType.Sequence.ToString()));
+        }
+
+        [Fact]
+        public void GetScalarValue_WithKey_ScalarNode_ReturnsValue()
+        {
+            var value = DockerComposeParser.GetScalarValue("name", new YamlScalarNode("service-a"));
+
+            value.Should().Be("service-a");
+        }
+
+        [Fact]
+        public void GetScalarValue_WithKey_NonScalarNode_Throws()
+        {
+            var ex = ((Action)(() => DockerComposeParser.GetScalarValue("name", new YamlMappingNode())))
+                .Should().Throw<TyeYamlException>().Which;
+
+            ex.Message.Should().Contain(CoreStrings.FormatExpectedYamlScalar("name"));
+        }
+
+        [Fact]
+        public void ThrowIfNotYamlSequence_SequenceNode_DoesNotThrow()
+        {
+            var act = () => DockerComposeParser.ThrowIfNotYamlSequence("ports", new YamlSequenceNode());
+
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void ThrowIfNotYamlSequence_NonSequenceNode_Throws()
+        {
+            var ex = ((Action)(() => DockerComposeParser.ThrowIfNotYamlSequence("ports", new YamlScalarNode("8080"))))
+                .Should().Throw<TyeYamlException>().Which;
+
+            ex.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("ports"));
+        }
+
+        // =====================================================================
         // Ports Parsing
         // =====================================================================
 
@@ -404,6 +461,37 @@ volumes:
         }
 
         [Fact]
+        public void Parse_VolumesKey_WithSupportedOptions_DoesNotThrow()
+        {
+            using var parser = new DockerComposeParser(@"
+version: '3'
+volumes:
+  data:
+    driver: local
+    labels:
+      purpose: test
+    name: shared-data
+  cache:
+    external: true
+");
+            var app = parser.ParseConfigApplication();
+            app.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Parse_VolumesKey_WithUnknownOption_Throws()
+        {
+            using var parser = new DockerComposeParser(@"
+version: '3'
+volumes:
+  data:
+    unsupported_option: true
+");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("unsupported_option"));
+        }
+
+        [Fact]
         public void Parse_NetworksKey_Ignored()
         {
             using var parser = new DockerComposeParser(@"
@@ -413,6 +501,37 @@ networks:
 ");
             var app = parser.ParseConfigApplication();
             app.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Parse_NetworksKey_WithSupportedOptions_DoesNotThrow()
+        {
+            using var parser = new DockerComposeParser(@"
+version: '3'
+networks:
+  frontend:
+    driver: bridge
+    attachable: true
+    labels:
+      env: test
+  backend:
+    internal: true
+");
+            var app = parser.ParseConfigApplication();
+            app.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Parse_NetworksKey_WithUnknownOption_Throws()
+        {
+            using var parser = new DockerComposeParser(@"
+version: '3'
+networks:
+  frontend:
+    unsupported_network_option: true
+");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("unsupported_network_option"));
         }
 
         [Fact]
@@ -470,6 +589,52 @@ unknown_top_level: value
         [InlineData("privileged: true")]
         [InlineData("read_only: true")]
         public void Parse_Service_IgnoredKeys_DoNotThrow(string serviceProperty)
+        {
+            using var parser = new DockerComposeParser($@"
+services:
+  app:
+    image: myapp
+    {serviceProperty}
+");
+            var app = parser.ParseConfigApplication();
+            app.Services.Should().ContainSingle();
+        }
+
+        [Theory]
+        [InlineData("cgroup_parent: parent")]
+        [InlineData("configs: {}")]
+        [InlineData("credential_spec: spec")]
+        [InlineData("deploy: {}")]
+        [InlineData("devices: []")]
+        [InlineData("dns_search: example.local")]
+        [InlineData("endpoint: endpoint")]
+        [InlineData("env_file: .env")]
+        [InlineData("expose: []")]
+        [InlineData("external_links: []")]
+        [InlineData("extra_hosts: []")]
+        [InlineData("healthcheck: {}")]
+        [InlineData("init: true")]
+        [InlineData("isolation: process")]
+        [InlineData("labels: {}")]
+        [InlineData("links: []")]
+        [InlineData("logging: {}")]
+        [InlineData("network_mode: bridge")]
+        [InlineData("networks: {}")]
+        [InlineData("pid: host")]
+        [InlineData("secrets: []")]
+        [InlineData("security_opt: []")]
+        [InlineData("stop_grace_period: 1s")]
+        [InlineData("stop_signal: SIGTERM")]
+        [InlineData("sysctls: {}")]
+        [InlineData("tmpfs: []")]
+        [InlineData("ulimits: {}")]
+        [InlineData("userns_mode: host")]
+        [InlineData("volumes: []")]
+        [InlineData("domainname: example.com")]
+        [InlineData("ipc: host")]
+        [InlineData("mac_address: '00:11:22:33:44:55'")]
+        [InlineData("shm_size: 64m")]
+        public void Parse_Service_AdditionalIgnoredKeys_DoNotThrow(string serviceProperty)
         {
             using var parser = new DockerComposeParser($@"
 services:
