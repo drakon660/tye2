@@ -97,7 +97,7 @@ name: frontend-backend
 services:
 - name: backend
   azureFunction: backend/  
-  args: start --csharp        
+  args: start --dotnet-isolated
 - name: frontend
   project: frontend/frontend.csproj";
 
