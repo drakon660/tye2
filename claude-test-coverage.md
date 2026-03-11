@@ -3,15 +3,16 @@
 ## Current State
 
 ### Test Projects
-- **Tye2.UnitTests** — 589 tests across 36 test files (up from 5 files originally)
-- **Tye2.E2ETests** — 14+ integration tests (require Docker, slow)
+- **Tye2.UnitTests** — 716 tests across 39 test files (up from 5 files originally)
+- **Tye2.E2ETests** — 27+ integration tests (require Docker, slow)
 - **Tye2.Extensions.Configuration.Tests** — configuration extension tests
 
 ### Progress
-Phase 1 (Critical) from the original analysis is now **fully covered**. All 6 critical components have comprehensive unit tests.
-Phase 2 (Runtime Infrastructure) partially covered: PortAssigner, ReplicaRegistry.
-Phase 3 (Extensions) partially covered: Zipkin, Seq, Elastic, DiagnosticAgent.
-Phase 4 (Utilities) partially covered: ArgumentEscaper, NameInferer, ConfigFileFinder, OutputContext.
+Phase 1 (Critical) — **fully covered**. All 6 critical components have comprehensive unit tests.
+Phase 2 (Runtime Infrastructure) — PortAssigner, ReplicaRegistry.
+Phase 3 (Extensions) — Zipkin, Seq, Elastic, DiagnosticAgent, DaprExtensionConfigurationReader.
+Phase 4 (Utilities) — ArgumentEscaper, NameInferer, ConfigFileFinder, OutputContext.
+Phase 5 (Coverage-driven) — **complete**. SolutionFile parser, ContainerEngine detection.
 
 ---
 
@@ -41,6 +42,7 @@ Phase 4 (Utilities) partially covered: ArgumentEscaper, NameInferer, ConfigFileF
 | Seq extension | `SeqExtensionTests.cs` | 12 | Service injection (container, image, binding, env var), logPath volume, dependency wiring, duplicate detection, logging provider, deploy sidecar |
 | Elastic extension | `ElasticStackExtensionTests.cs` | 14 | Service injection (container, image, kibana+http bindings), logPath volume, dependency wiring, duplicate detection, logging provider, deploy sidecar + kibana binding removal |
 | DiagnosticAgent | `DiagnosticAgentTests.cs` | 10 | GetOrAddSidecar (name, image, args, relocate diagnostics), idempotent add, existing sidecar reuse |
+| DaprExtensionConfigurationReader | `DaprExtensionConfigurationReaderTests.cs` | 18 | Empty config defaults, all common properties, string→int/bool coercion, invalid/null values, services parsing (single/multi/case-insensitive), service common props, non-dict skip, global+service config, enabled false, bool false as string, unknown keys, real-world configs |
 
 ## Covered — Utilities (Phase 4 partial)
 
@@ -50,6 +52,8 @@ Phase 4 (Utilities) partially covered: ArgumentEscaper, NameInferer, ConfigFileF
 | ArgumentEscaper | `ArgumentEscaperTests.cs` | 17 | Simple args, whitespace quoting, backslash escaping, embedded quotes, already-quoted strings, mixed args, real-world examples |
 | NameInferer | `NameInfererTests.cs` | 9 | .sln/.csproj/.fsproj name extraction, YAML directory fallback, case normalization, null input |
 | ConfigFileFinder | `ConfigFileFinderTests.cs` | 14 | tye.yaml/yml, docker-compose, .csproj/.fsproj/.sln, priority order, empty dir, multiple matches, custom formats |
+| SolutionFile parser | `SolutionFileTests.cs` | 28 | Single/multi/mixed project parsing, project types (C#/F#/folder), GUIDs, relative/absolute paths, configurations, nested projects, solution folders, solution filters (.slnf), IsBuildableProject, version detection, error handling |
+| ContainerEngine | `ContainerEngineTests.cs` | 15 | Auto-detect, explicit Docker/Podman, IsUsable, ContainerHost, AspNetUrlsHost, IsPodman, CommandName throw on unusable, s_default singleton override, ContainerEngineType enum |
 
 ## Covered — Pre-existing Tests
 
@@ -60,6 +64,55 @@ Phase 4 (Utilities) partially covered: ArgumentEscaper, NameInferer, ConfigFileF
 | Service Model | `ServiceUnitTests.cs` | 13 | Pre-existing service model tests |
 | DefaultOptionsMiddleware | `DefaultOptionsMiddlewareTests.cs` | 6 | Pre-existing middleware tests |
 | Ansi2HtmlConverter | `Ansi2HtmlConverterTests.cs` | 2 | Pre-existing converter tests |
+
+---
+
+## Coverage Analysis (from cobertura XML, 2026-03-11)
+
+### Well Covered (>80%) — No action needed
+Most core logic, serialization, config model, and hosting model classes are well covered by the combination of unit and E2E tests.
+
+### Partially Covered (1-50%) — Best candidates for improvement
+
+| File | Line Coverage | Recommendation |
+|------|-------------|----------------|
+| TyeDashboardApi.cs | ~45% | **Done** — 11 E2E tests covering all endpoints |
+| DaprExtensionConfigurationReader.cs | ~47% | **Done** — 18 unit tests added |
+| ContainerEngine*.cs / DockerDetector.cs | 32-49% | **Done** — 15 unit tests added |
+| DockerComposeParser.cs | ~37% | E2E: `tye run` with docker-compose.yml test asset |
+| ValidateSecretStep.cs | ~36% | E2E: service with secret bindings + deploy validation |
+| SolutionFile.cs | 34-42% | **Done** — 28 unit tests added |
+| Application.cs | ~11.5% | **Partial** — 2 E2E tests (bindings, replicas, env vars, single-project) |
+
+### Uncovered (0%) — 240 files
+Many are test infrastructure, generated code, or obj/ artifacts. Key uncovered production files:
+- `src/Tye2.Hosting/Watch/` (11 files) — file system watchers
+- `src/Tye2.Hosting.Diagnostics/` (5 files) — diagnostic collectors
+- CLI command handlers (`Program.*.cs`)
+
+## Next Steps Plan
+
+### Phase 5 — Unit Tests (no external deps)
+- [x] **SolutionFile parser** — 28 tests: parse .sln content, project types, nested projects, solution filters ✓
+- [x] **ContainerEngine detection** — 15 tests: Docker/Podman detection, IsUsable, host config, singleton ✓
+
+### Phase 6 — E2E Tests (require Docker)
+- [x] **Dashboard API test** — 11 tests: ServiceIndex, ApplicationIndex, Services list, Service by name, 404s, Logs, Metrics (text+JSON), MetricsByName ✓
+- [x] **Multi-service bindings test** — 2 tests: custom bindings, replicas, env vars, single-project run ✓
+- [ ] **Docker Compose test** — `tye run` with docker-compose.yml (requires Docker images, deferred)
+- [ ] **Secret validation test** — requires Kubernetes cluster (deferred)
+
+### Phase 7 — Remaining testable utilities
+- [ ] **ProjectReader** — enumerates projects from .sln, extracts TFM/version info (pure logic)
+- [ ] **GitDetector** — singleton git detection (similar pattern to ContainerEngine)
+- [ ] **NextPortFinder** — port allocation logic
+- [ ] **TempDirectory / DirectoryCopy** — filesystem helpers
+
+### Phase 8 — Hard-to-test components (if needed)
+- [ ] **Dapr extension** — largest extension, process dependency
+- [ ] **File watching** — filesystem watchers, MSBuild integration
+- [ ] **Diagnostics** — diagnostic collectors
+- [ ] **CLI commands** — `Program.*.cs` command handlers
 
 ---
 
@@ -81,12 +134,11 @@ Phase 4 (Utilities) partially covered: ArgumentEscaper, NameInferer, ConfigFileF
 | Component | File(s) | Status |
 |-----------|---------|--------|
 | Dapr extension | `src/Tye2.Extensions/Dapr/DaprExtension.cs` | Untested — largest extension (~390 lines), has process dependency (VerifyDaprInitialized) |
-| DaprExtensionConfigurationReader | `src/Tye2.Extensions/Dapr/DaprExtensionConfigurationReader.cs` | Untested — pure config parsing logic, easy to test |
 | File watching | `src/Tye2.Hosting/Watch/` (11 files) | Untested — file system watchers, MSBuild integration |
 | Diagnostics | `src/Tye2.Hosting.Diagnostics/` (5 files, ~300 lines) | Untested |
 
 ### Lower Priority — Utilities (untested)
 
-- NextPortFinder, ContainerEngine, ProjectReader, GitDetector
-- ConsoleExtensions, ProcessExtensions, DirectoryCopy, TempDirectory
+- NextPortFinder, ProjectReader, GitDetector, TempDirectory, DirectoryCopy
+- ConsoleExtensions, ProcessExtensions
 - CLI commands (`Program.*.cs` files, ~500+ lines)
