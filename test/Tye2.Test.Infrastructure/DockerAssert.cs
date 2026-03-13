@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Tye2.Core;
-using Xunit;
+using Xunit.Abstractions;
 using Xunit.Sdk;
 
 namespace Tye2.Test.Infrastructure

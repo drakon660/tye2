@@ -2,7 +2,8 @@
 
 using System;
 using System.Reflection;
-using Xunit;
+using Tye2.Test.Infrastructure.xunit;
+using Xunit.Abstractions;
 
 namespace Tye2.Test.Infrastructure
 {
@@ -10,6 +11,9 @@ namespace Tye2.Test.Infrastructure
     /// Provides access to contextual information about the running tests. Get access by
     /// implementing <see cref="ITestMethodLifecycle"/>.
     /// </summary>
+    /// <remarks>
+    /// Requires defining <see cref="AspNetTestFramework"/> as the test framework.
+    /// </remarks>
     public sealed class TestContext
     {
         private Lazy<TestFileOutputContext> _files;

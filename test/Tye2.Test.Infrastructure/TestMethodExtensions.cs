@@ -1,17 +1,23 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Linq;
-using Xunit.v3;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Tye2.Test.Infrastructure
 {
     public static class TestMethodExtensions
     {
-        public static string EvaluateSkipConditions(this IXunitTestMethod testMethod)
+        public static string EvaluateSkipConditions(this ITestMethod testMethod)
         {
-            var conditionAttributes = testMethod.Method.GetCustomAttributes(typeof(ITestCondition), inherit: true).Cast<ITestCondition>()
-                .Concat(testMethod.TestClass.Class.GetCustomAttributes(typeof(ITestCondition), inherit: true).Cast<ITestCondition>())
-                .Concat(testMethod.TestClass.TestCollection.TestAssembly.Assembly.GetCustomAttributes(typeof(ITestCondition), inherit: true).Cast<ITestCondition>());
+            var testClass = testMethod.TestClass.Class;
+            var assembly = testMethod.TestClass.TestCollection.TestAssembly.Assembly;
+            var conditionAttributes = testMethod.Method
+                .GetCustomAttributes(typeof(ITestCondition))
+                .Concat(testClass.GetCustomAttributes(typeof(ITestCondition)))
+                .Concat(assembly.GetCustomAttributes(typeof(ITestCondition)))
+                .OfType<ReflectionAttributeInfo>()
+                .Select(attributeInfo => attributeInfo.Attribute);
 
             foreach (ITestCondition condition in conditionAttributes)
             {

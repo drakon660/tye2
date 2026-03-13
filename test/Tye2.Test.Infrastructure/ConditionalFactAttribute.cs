@@ -2,12 +2,12 @@
 
 using System;
 using Xunit;
-using Xunit.v3;
+using Xunit.Sdk;
 
 namespace Tye2.Test.Infrastructure
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    [XunitTestCaseDiscoverer(typeof(ConditionalFactDiscoverer))]
+    [XunitTestCaseDiscoverer("Tye2.Test.Infrastructure." + nameof(ConditionalFactDiscoverer), "Tye2.Test.Infrastructure")]
     public class ConditionalFactAttribute : FactAttribute
     {
     }
