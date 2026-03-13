@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using FluentAssertions;
+using AwesomeAssertions;
 using Tye2.Core;
 using Tye2.Hosting;
 using Tye2.Hosting.Model;

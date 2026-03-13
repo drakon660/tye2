@@ -17,7 +17,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
+using AwesomeAssertions;
 using Refit;
 using Tye2.Core;
 using Tye2.E2ETests.Infrastructure;
