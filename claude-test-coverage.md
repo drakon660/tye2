@@ -3,8 +3,8 @@
 ## Current State
 
 ### Test Projects
-- **Tye2.UnitTests** — 799 tests across 43 test files (up from 5 files originally)
-- **Tye2.E2ETests** — 27+ integration tests (require Docker, slow)
+- **Tye2.UnitTests** — 861 tests across 44 test files (up from 5 files originally)
+- **Tye2.E2ETests** — 38+ integration tests (11 new ProcessRunner E2E tests)
 - **Tye2.Extensions.Configuration.Tests** — configuration extension tests
 
 ### Progress
@@ -14,6 +14,7 @@ Phase 3 (Extensions) — Zipkin, Seq, Elastic, DiagnosticAgent, DaprExtensionCon
 Phase 4 (Utilities) — ArgumentEscaper, NameInferer, ConfigFileFinder, OutputContext.
 Phase 5 (Coverage-driven) — **complete**. SolutionFile parser, ContainerEngine detection.
 Phase 7 (Testable utilities) — **complete**. ProjectReader, GitDetector, NextPortFinder, TempDirectory.
+Phase 8 (CLI commands) — CLI command structure, StandardOptions, ApplicationFactoryFilter, ConfigFileFinder, InitHost, ContainerRegistry, CommandException.
 
 ---
 
@@ -94,7 +95,7 @@ Most core logic, serialization, config model, and hosting model classes are well
 Many are test infrastructure, generated code, or obj/ artifacts. Key uncovered production files:
 - `src/Tye2.Hosting/Watch/` (11 files) — file system watchers
 - `src/Tye2.Hosting.Diagnostics/` (5 files) — diagnostic collectors
-- CLI command handlers (`Program.*.cs`)
+- ~~CLI command handlers (`Program.*.cs`)~~ **Done** — 62 tests in `CliCommandTests.cs`
 
 ## Next Steps Plan
 
@@ -118,7 +119,7 @@ Many are test infrastructure, generated code, or obj/ artifacts. Key uncovered p
 - [ ] **Dapr extension** — largest extension, process dependency
 - [ ] **File watching** — filesystem watchers, MSBuild integration
 - [ ] **Diagnostics** — diagnostic collectors
-- [ ] **CLI commands** — `Program.*.cs` command handlers
+- [x] **CLI commands** — 62 tests: command structure (7 commands), StandardOptions (13 options), ApplicationFactoryFilter, ConfigFileFinder, InitHost, ContainerRegistry, CommandException, command parsing ✓
 
 ---
 
@@ -128,7 +129,7 @@ Many are test infrastructure, generated code, or obj/ artifacts. Key uncovered p
 
 | Component | File(s) | Lines | Testability |
 |-----------|---------|-------|-------------|
-| ProcessRunner | `src/Tye2.Hosting/ProcessRunner.cs` | ~300 | Hard — spawns OS processes, signal forwarding |
+| ProcessRunner | `src/Tye2.Hosting/ProcessRunner.cs` | ~300 | **Covered** — 36 unit tests (options, service model, state) + 11 E2E tests (process start, PID, HTTP, replicas, restart, args, env vars, logs, bindings, no-build, multi-service) |
 | DockerRunner | `src/Tye2.Hosting/DockerRunner.cs` | ~300 | Hard — Docker CLI interaction, container lifecycle |
 | ReplicaMonitor | `src/Tye2.Hosting/ReplicaMonitor.cs` | ~200 | Hard — tightly coupled to HTTP probing, timers, Rx subscriptions |
 | ProxyService | `src/Tye2.Hosting/ProxyService.cs` | ~300 | Hard — socket proxy, connection forwarding |
@@ -146,6 +147,5 @@ Many are test infrastructure, generated code, or obj/ artifacts. Key uncovered p
 ### Lower Priority — Utilities (untested)
 
 - DirectoryCopy, ConsoleExtensions, ProcessExtensions
-- CLI commands (`Program.*.cs` files, ~500+ lines)
 
 
