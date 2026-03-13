@@ -1,37 +1,25 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using Xunit.Abstractions;
+using System.Threading.Tasks;
 using Xunit.Sdk;
+using Xunit.v3;
 
 namespace Tye2.Test.Infrastructure
 {
     internal class ConditionalTheoryDiscoverer : TheoryDiscoverer
     {
-        private readonly IMessageSink _diagnosticMessageSink;
-
-        public ConditionalTheoryDiscoverer(IMessageSink diagnosticMessageSink)
-            : base(diagnosticMessageSink)
-        {
-            _diagnosticMessageSink = diagnosticMessageSink;
-        }
-
-        protected override IEnumerable<IXunitTestCase> CreateTestCasesForTheory(
+        protected override ValueTask<IReadOnlyCollection<IXunitTestCase>> CreateTestCasesForTheory(
             ITestFrameworkDiscoveryOptions discoveryOptions,
-            ITestMethod testMethod,
-            IAttributeInfo theoryAttribute)
+            IXunitTestMethod testMethod,
+            ITheoryAttribute theoryAttribute)
         {
             var skipReason = testMethod.EvaluateSkipConditions();
             return skipReason != null
-                       ? new IXunitTestCase[]
+                       ? new ValueTask<IReadOnlyCollection<IXunitTestCase>>(new IXunitTestCase[]
                          {
-                             new SkippedTestCase(
-                                 skipReason,
-                                 _diagnosticMessageSink,
-                                 discoveryOptions.MethodDisplayOrDefault(),
-                                 TestMethodDisplayOptions.None,
-                                 testMethod)
-                         }
+                             new SkippedTestCase(skipReason, testMethod, theoryAttribute)
+                         })
                        : base.CreateTestCasesForTheory(discoveryOptions, testMethod, theoryAttribute);
         }
     }

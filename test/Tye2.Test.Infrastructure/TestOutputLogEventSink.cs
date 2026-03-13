@@ -2,7 +2,7 @@
 using System.CommandLine.IO;
 using Serilog.Core;
 using Serilog.Events;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Tye2.Test.Infrastructure
 {
