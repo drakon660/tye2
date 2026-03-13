@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
-using Xunit;
+using Xunit.Abstractions;
 
 namespace Tye2.Test.Infrastructure.Logging
 {

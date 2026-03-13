@@ -2,12 +2,12 @@
 
 using System;
 using Xunit;
-using Xunit.v3;
+using Xunit.Sdk;
 
 namespace Tye2.Test.Infrastructure
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    [XunitTestCaseDiscoverer(typeof(ConditionalTheoryDiscoverer))]
+    [XunitTestCaseDiscoverer("Tye2.Test.Infrastructure." + nameof(ConditionalTheoryDiscoverer), "Tye2.Test.Infrastructure")]
     public class ConditionalTheoryAttribute : TheoryAttribute
     {
     }

@@ -14,7 +14,7 @@ using Serilog.Core;
 using Serilog.Events;
 using Serilog.Extensions.Logging;
 using Tye2.Test.Infrastructure.Logging;
-using Xunit;
+using Xunit.Abstractions;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Tye2.Test.Infrastructure

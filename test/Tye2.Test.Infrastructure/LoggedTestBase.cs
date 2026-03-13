@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Tye2.Test.Infrastructure.Logging;
-using Xunit;
+using Xunit.Abstractions;
 
 namespace Tye2.Test.Infrastructure
 {

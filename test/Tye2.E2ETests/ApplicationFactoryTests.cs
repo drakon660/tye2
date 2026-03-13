@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Tye2.Core;
 using Tye2.Test.Infrastructure;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Tye2.E2ETests
 {

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Tye2.Test.Infrastructure.xunit;
 
 namespace Tye2.Test.Infrastructure
 {
@@ -12,6 +13,9 @@ namespace Tye2.Test.Infrastructure
     /// Provides access to file storage for the running test. Get access by
     /// implementing <see cref="ITestMethodLifecycle"/>, and accessing <see cref="TestContext.FileOutput"/>.
     /// </summary>
+    /// <remarks>
+    /// Requires defining <see cref="AspNetTestFramework"/> as the test framework.
+    /// </remarks>
     public sealed class TestFileOutputContext
     {
         private static char[] InvalidFileChars = new char[]

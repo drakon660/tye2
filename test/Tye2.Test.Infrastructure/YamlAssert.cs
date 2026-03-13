@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Xunit;
+using Xunit.Abstractions;
 using YamlDotNet.RepresentationModel;
 
 namespace Tye2.Test.Infrastructure
