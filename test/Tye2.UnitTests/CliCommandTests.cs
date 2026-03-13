@@ -176,8 +176,8 @@ public class CliCommandTests : IDisposable
     public void StandardOptions_Environment_HasShortAlias()
     {
         var option = StandardOptions.Environment;
-        option.Aliases.Should().Contain("-e");
-        option.Aliases.Should().Contain("--environment");
+        option.Aliases.Should().Contain("e");
+        option.Aliases.Should().Contain("environment");
     }
 
     [Fact]
@@ -191,24 +191,24 @@ public class CliCommandTests : IDisposable
     public void StandardOptions_Framework_HasShortAlias()
     {
         var option = StandardOptions.Framework;
-        option.Aliases.Should().Contain("-f");
-        option.Aliases.Should().Contain("--framework");
+        option.Aliases.Should().Contain("f");
+        option.Aliases.Should().Contain("framework");
     }
 
     [Fact]
     public void StandardOptions_Interactive_HasShortAlias()
     {
         var option = StandardOptions.Interactive;
-        option.Aliases.Should().Contain("-i");
-        option.Aliases.Should().Contain("--interactive");
+        option.Aliases.Should().Contain("i");
+        option.Aliases.Should().Contain("interactive");
     }
 
     [Fact]
     public void StandardOptions_Verbosity_HasShortAlias()
     {
         var option = StandardOptions.Verbosity;
-        option.Aliases.Should().Contain("-v");
-        option.Aliases.Should().Contain("--verbosity");
+        option.Aliases.Should().Contain("v");
+        option.Aliases.Should().Contain("verbosity");
     }
 
     [Fact]
@@ -222,15 +222,15 @@ public class CliCommandTests : IDisposable
     public void StandardOptions_Namespace_HasShortAlias()
     {
         var option = StandardOptions.Namespace;
-        option.Aliases.Should().Contain("-n");
-        option.Aliases.Should().Contain("--namespace");
+        option.Aliases.Should().Contain("n");
+        option.Aliases.Should().Contain("namespace");
     }
 
     [Fact]
     public void StandardOptions_NoDefaultOptions_HasAlias()
     {
         var option = StandardOptions.NoDefaultOptions;
-        option.Aliases.Should().Contain("--no-default");
+        option.Aliases.Should().Contain("no-default");
     }
 
     [Fact]
@@ -238,15 +238,15 @@ public class CliCommandTests : IDisposable
     {
         var option = StandardOptions.CreateForce("test description");
         option.Description.Should().Be("test description");
-        option.Aliases.Should().Contain("--force");
+        option.Aliases.Should().Contain("force");
     }
 
     [Fact]
     public void StandardOptions_Outputs_HasSuggestions()
     {
         var option = StandardOptions.Outputs;
-        option.Aliases.Should().Contain("-o");
-        option.Aliases.Should().Contain("--outputs");
+        option.Aliases.Should().Contain("o");
+        option.Aliases.Should().Contain("outputs");
     }
 
     [Fact]
@@ -260,8 +260,8 @@ public class CliCommandTests : IDisposable
     public void StandardOptions_Project_HasShortAlias()
     {
         var option = StandardOptions.Project;
-        option.Aliases.Should().Contain("-p");
-        option.Aliases.Should().Contain("--project");
+        option.Aliases.Should().Contain("p");
+        option.Aliases.Should().Contain("project");
     }
 
     #endregion
@@ -566,7 +566,7 @@ public class CliCommandTests : IDisposable
         var command = Program.CreateBuildCommand();
         var parser = new CommandLineBuilder(new RootCommand { command }).Build();
 
-        var result = parser.Parse("build --verbosity debug nonexistent.csproj");
+        var result = parser.Parse(new[] { "build", "--verbosity", "debug", "nonexistent.csproj" });
 
         result.Errors.Should().NotContain(e => e.Message.Contains("verbosity"));
     }
@@ -577,7 +577,7 @@ public class CliCommandTests : IDisposable
         var command = Program.CreateBuildCommand();
         var parser = new CommandLineBuilder(new RootCommand { command }).Build();
 
-        var result = parser.Parse("build --framework net8.0 nonexistent.csproj");
+        var result = parser.Parse(new[] { "build", "--framework", "net8.0", "nonexistent.csproj" });
 
         result.Errors.Should().NotContain(e => e.Message.Contains("framework"));
     }
@@ -588,7 +588,7 @@ public class CliCommandTests : IDisposable
         var command = Program.CreateBuildCommand();
         var parser = new CommandLineBuilder(new RootCommand { command }).Build();
 
-        var result = parser.Parse("build --interactive nonexistent.csproj");
+        var result = parser.Parse(new[] { "build", "--interactive", "nonexistent.csproj" });
 
         result.Errors.Should().NotContain(e => e.Message.Contains("interactive"));
     }
@@ -599,7 +599,7 @@ public class CliCommandTests : IDisposable
         var command = Program.CreateBuildCommand();
         var parser = new CommandLineBuilder(new RootCommand { command }).Build();
 
-        var result = parser.Parse("build --tags frontend nonexistent.csproj");
+        var result = parser.Parse(new[] { "build", "--tags", "frontend", "nonexistent.csproj" });
 
         result.Errors.Should().NotContain(e => e.Message.Contains("tags"));
     }
@@ -610,7 +610,7 @@ public class CliCommandTests : IDisposable
         var command = Program.CreateDeployCommand();
         var parser = new CommandLineBuilder(new RootCommand { command }).Build();
 
-        var result = parser.Parse("deploy --namespace my-namespace nonexistent.csproj");
+        var result = parser.Parse(new[] { "deploy", "--namespace", "my-namespace", "nonexistent.csproj" });
 
         result.Errors.Should().NotContain(e => e.Message.Contains("namespace"));
     }
@@ -621,7 +621,7 @@ public class CliCommandTests : IDisposable
         var command = Program.CreateDeployCommand();
         var parser = new CommandLineBuilder(new RootCommand { command }).Build();
 
-        var result = parser.Parse("deploy --force nonexistent.csproj");
+        var result = parser.Parse(new[] { "deploy", "--force", "nonexistent.csproj" });
 
         result.Errors.Should().NotContain(e => e.Message.Contains("force"));
     }
@@ -632,7 +632,7 @@ public class CliCommandTests : IDisposable
         var command = Program.CreateUndeployCommand();
         var parser = new CommandLineBuilder(new RootCommand { command }).Build();
 
-        var result = parser.Parse("undeploy --what-if nonexistent.csproj");
+        var result = parser.Parse(new[] { "undeploy", "--what-if", "nonexistent.csproj" });
 
         result.Errors.Should().NotContain(e => e.Message.Contains("what-if"));
     }
