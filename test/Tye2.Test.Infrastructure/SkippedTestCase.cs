@@ -1,48 +1,62 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Xunit.Abstractions;
+using System.Collections.Generic;
+using System.Linq;
+using Xunit;
 using Xunit.Sdk;
+using Xunit.v3;
 
 namespace Tye2.Test.Infrastructure
 {
     public class SkippedTestCase : XunitTestCase
     {
-        private string _skipReason;
-
         [Obsolete("Called by the de-serializer; should only be called by deriving classes for de-serialization purposes")]
         public SkippedTestCase() : base()
         {
-            _skipReason = "";
         }
 
         public SkippedTestCase(
             string skipReason,
-            IMessageSink diagnosticMessageSink,
-            TestMethodDisplay defaultMethodDisplay,
-            TestMethodDisplayOptions defaultMethodDisplayOptions,
-            ITestMethod testMethod)
-            : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod)
+            IXunitTestMethod testMethod,
+            IFactAttribute factAttribute)
+            : base(
+                testMethod,
+                testMethod.GetDisplayName(factAttribute.DisplayName ?? testMethod.Method.Name, null, testMethod.TestMethodArguments, null),
+                UniqueIDGenerator.ForTestCase(((ITestMethodMetadata)testMethod).UniqueID, null, testMethod.TestMethodArguments),
+                factAttribute.Explicit,
+                factAttribute.SkipExceptions,
+                skipReason,
+                factAttribute.SkipType,
+                factAttribute.SkipUnless,
+                factAttribute.SkipWhen,
+                GetTraits(testMethod),
+                testMethod.TestMethodArguments,
+                factAttribute.SourceFilePath,
+                factAttribute.SourceLineNumber,
+                factAttribute.Timeout > 0 ? factAttribute.Timeout : null)
         {
-            _skipReason = skipReason;
         }
 
-        protected override string GetSkipReason(IAttributeInfo factAttribute)
-            => _skipReason ?? base.GetSkipReason(factAttribute);
-
-        public override void Deserialize(IXunitSerializationInfo data)
+        private static Dictionary<string, HashSet<string>> GetTraits(IXunitTestMethod testMethod)
         {
-            _skipReason = data.GetValue<string>(nameof(_skipReason));
+            var traits = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            var attributes = testMethod.Method.GetCustomAttributes(typeof(TraitAttribute), inherit: true).Cast<TraitAttribute>()
+                .Concat(testMethod.TestClass.Class.GetCustomAttributes(typeof(TraitAttribute), inherit: true).Cast<TraitAttribute>())
+                .Concat(testMethod.TestClass.TestCollection.TestAssembly.Assembly.GetCustomAttributes(typeof(TraitAttribute), inherit: true).Cast<TraitAttribute>());
 
-            // We need to call base after reading our value, because Deserialize will call
-            // into GetSkipReason.
-            base.Deserialize(data);
-        }
+            foreach (var attribute in attributes)
+            {
+                if (!traits.TryGetValue(attribute.Name, out var values))
+                {
+                    values = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    traits[attribute.Name] = values;
+                }
 
-        public override void Serialize(IXunitSerializationInfo data)
-        {
-            base.Serialize(data);
-            data.AddValue(nameof(_skipReason), _skipReason);
+                values.Add(attribute.Value);
+            }
+
+            return traits;
         }
     }
 }

@@ -1,26 +1,18 @@
 // See the LICENSE file in the project root for more information.
 
-using Xunit.Abstractions;
 using Xunit.Sdk;
+using Xunit.v3;
 
 // Do not change this namespace without changing the usage in ConditionalFactAttribute
 namespace Tye2.Test.Infrastructure
 {
     internal class ConditionalFactDiscoverer : FactDiscoverer
     {
-        private readonly IMessageSink _diagnosticMessageSink;
-
-        public ConditionalFactDiscoverer(IMessageSink diagnosticMessageSink)
-            : base(diagnosticMessageSink)
-        {
-            _diagnosticMessageSink = diagnosticMessageSink;
-        }
-
-        protected override IXunitTestCase CreateTestCase(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo factAttribute)
+        protected override IXunitTestCase CreateTestCase(ITestFrameworkDiscoveryOptions discoveryOptions, IXunitTestMethod testMethod, IFactAttribute factAttribute)
         {
             var skipReason = testMethod.EvaluateSkipConditions();
             return skipReason != null
-                ? new SkippedTestCase(skipReason, _diagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), TestMethodDisplayOptions.None, testMethod)
+                ? new SkippedTestCase(skipReason, testMethod, factAttribute)
                 : base.CreateTestCase(discoveryOptions, testMethod, factAttribute);
         }
     }

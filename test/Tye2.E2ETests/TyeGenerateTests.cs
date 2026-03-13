@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Tye;
 using Tye2.Core;
 using Tye2.Test.Infrastructure;
-using Xunit.Abstractions;
+using Xunit;
 using static Tye2.Test.Infrastructure.TestHelpers;
 
 namespace Tye2.E2ETests

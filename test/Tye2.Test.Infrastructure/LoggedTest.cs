@@ -3,7 +3,7 @@
 
 using System.Reflection;
 using Tye2.Test.Infrastructure.Logging;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Tye2.Test.Infrastructure
 {
