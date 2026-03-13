@@ -3,7 +3,7 @@
 using System;
 using System.IO;
 
-namespace Microsoft.Tye
+namespace Tye2
 {
     internal class TempFile : IDisposable
     {

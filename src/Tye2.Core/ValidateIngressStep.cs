@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using k8s;
 using k8s.Models;
 using Microsoft.Rest;
-using Microsoft.Tye;
 
 namespace Tye2.Core
 {

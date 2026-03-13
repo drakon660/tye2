@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using AwesomeAssertions;
-using Microsoft.Tye;
 using Xunit;
 
 namespace Tye2.UnitTests

@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Tye2.Core;
 
-namespace Microsoft.Tye
+namespace Tye2
 {
     internal static class KubectlDetector
     {
