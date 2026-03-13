@@ -1,6 +1,5 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Generic;
 using Xunit.Abstractions;
 using Xunit.Sdk;
@@ -64,23 +63,5 @@ namespace Tye2.Test.Infrastructure.xunit
                 : base.CreateTestCasesForDataRow(discoveryOptions, testMethod, theoryAttribute, dataRow);
         }
 
-        protected override IEnumerable<IXunitTestCase> CreateTestCasesForSkippedDataRow(
-            ITestFrameworkDiscoveryOptions discoveryOptions,
-            ITestMethod testMethod,
-            IAttributeInfo theoryAttribute,
-            object[] dataRow,
-            string skipReason)
-        {
-            return new[]
-            {
-                new WORKAROUND_SkippedDataRowTestCase(DiagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), discoveryOptions.MethodDisplayOptionsOrDefault(), testMethod, skipReason, dataRow),
-            };
-        }
-
-        [Obsolete]
-        protected override IXunitTestCase CreateTestCaseForSkippedDataRow(ITestFrameworkDiscoveryOptions discoveryOptions, ITestMethod testMethod, IAttributeInfo theoryAttribute, object[] dataRow, string skipReason)
-        {
-            return new WORKAROUND_SkippedDataRowTestCase(DiagnosticMessageSink, discoveryOptions.MethodDisplayOrDefault(), discoveryOptions.MethodDisplayOptionsOrDefault(), testMethod, skipReason, dataRow);
-        }
     }
 }
