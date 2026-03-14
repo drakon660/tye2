@@ -19,6 +19,13 @@ Completed work this week (March 8–13):
 - Upgraded `coverlet.collector` to v8.
 - Upgraded `Microsoft.NET.Test.Sdk` to 18.3.0.
 - Upgraded `YamlDotNet` from 15.1.2 to 16.3.0 (fixed `EnterMapping` signature breaking change).
+- Upgraded `Newtonsoft.Json` from 13.0.3 to 13.0.4.
+- Upgraded `System.Reactive` from 6.0.0 to 6.1.0.
+- Upgraded `Bedrock.Framework` from 0.1.62-alpha to 0.1.63-alpha.
+- Upgraded `Microsoft.Diagnostics.Tracing.TraceEvent` from 3.1.9 to 3.1.30.
+- Upgraded `Microsoft.Diagnostics.NETCore.Client` from 0.2.510501 to 0.2.661903.
+- Upgraded `Microsoft.Extensions.Logging.ApplicationInsights` from 2.22.0 to 2.23.0.
+- Upgraded `xunit.runner.visualstudio` to 3.1.5 across all test projects (backwards-compatible with xunit v2).
 
 ### Codebase cleanup
 - Removed `tye2-diag-agent` project (obsolete Linux-only EventPipe sidecar).
