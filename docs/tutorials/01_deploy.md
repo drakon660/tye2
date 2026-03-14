@@ -99,7 +99,7 @@ Tye has a optional configuration file (`tye.yaml`) to allow customizing settings
 
     ```yaml
     # tye application configuration file
-    # read all about it at https://github.com/dotnet/tye
+    # read all about it at https://github.com/drakon660/tye2
     #
     # when you've given us a try, we'd love to know what you think:
     #    <survey link>
