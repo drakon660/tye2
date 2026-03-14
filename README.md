@@ -1,5 +1,42 @@
 # Session Summary
 
+## 2026-03-13
+
+Completed work this week (March 8–13):
+
+### Test coverage expansion
+- Added unit tests for ConfigFactory, DockerComposeParser, ApplicationFactory, KubernetesManifestGenerator, Dockerfile generator, utility/runtime helpers, extension/output context, core branch coverage, YAML writer, ProcessUtil execute/run-async, CLI command parser, and ProcessRunner E2E scenarios.
+- Switched unit tests and E2E tests to AwesomeAssertions (replacing FluentAssertions).
+- Reduced unit test analyzer warnings across the board.
+
+### xunit v3 migration
+- Attempted migration of all test projects to xunit v3 (PR #68).
+- Reverted the xunit v3 migration from `develop` (PR #69) after E2E issues; E2E tests continue to require xunit v2 due to `DisableTestParallelization` behavior differences and process lifecycle issues.
+- Removed `WORKAROUND_SkippedDataRowTestCase` (fix shipped in xunit.runner.visualstudio 2.5.7).
+- Fixed CS8620 nullable warnings in `TyeConfigurationExtensionsTest.cs`.
+
+### Package upgrades
+- Upgraded `coverlet.collector` to v8.
+- Upgraded `Microsoft.NET.Test.Sdk` to 18.3.0.
+- Upgraded `YamlDotNet` from 15.1.2 to 16.3.0 (fixed `EnterMapping` signature breaking change).
+
+### Codebase cleanup
+- Removed `tye2-diag-agent` project (obsolete Linux-only EventPipe sidecar).
+- Removed Microsoft namespaces and set up tye2 global tool from built artifact.
+
+### Bug fixes
+- Fixed `docker-compose` port mapping patterns (additional formats supported).
+- Fixed `init` command: generate `tye.yaml` from docker-compose without overwrite.
+- Fixed `init` command: name compose bindings for multi-port services.
+
+### E2E test fixes
+- Removed untestable `RestartService` and `LaunchFailure` E2E tests (architectural issue: `Task.WhenAll(state.Tasks)` blocks forever in `RestartService`).
+- Confirmed restart behavior is covered by `ReplicaStoppingTests` via `StoppingTokenSource.Cancel()` pattern.
+
+### Documentation
+- Added git flow branch strategy for pull requests.
+- Added test coverage analysis notes.
+
 ## 2026-03-08
 
 Completed work in this session:

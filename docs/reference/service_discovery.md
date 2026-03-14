@@ -26,13 +26,15 @@ It is our recommendation you avoid any hardcoding of URIs/addresses of other ser
 
 ## How to do service discovery in .NET Applications
 
-The simple way to use Tye's service discovery is through the `Microsoft.Extensions.Configuration` system - available by default in ASP.NET Core or .NET Core Worker projects. In addition to this we provide the `Microsoft.Tye.Extensions.Configuration` package with some Tye-specific extensions layered on top of the configuration system.
+The simple way to use Tye's service discovery is through the `Microsoft.Extensions.Configuration` system - available by default in ASP.NET Core or .NET Core Worker projects. In addition to this we provide the `Tye2.Extensions.Configuration` package with some Tye-specific extensions layered on top of the configuration system.
 
 ---
 
-To access URIs use the `GetServiceUri()` extension method and provide the service name.
+To access URIs use the `GetServiceUri()` extension method and provide the service name. Add `using Tye2;` to import the extension methods.
 
 ```C#
+using Tye2;
+
 // Get the URI of the 'backend' service and create an HttpClient.
 var uri = Configuration.GetServiceUri("backend");
 var httpClient = new HttpClient()
