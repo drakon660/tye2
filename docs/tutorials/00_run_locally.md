@@ -119,17 +119,18 @@ Now that we have two applications running, let's make them communicate. By defau
    }
    ```
 
-4. Add a reference to the `Microsoft.Tye.Extensions.Configuration` package to the frontend project
+4. Add a reference to the `Tye2.Extensions.Configuration` package to the frontend project
 
     ```txt
-    dotnet add frontend/frontend.csproj package Microsoft.Tye.Extensions.Configuration  --version "0.4.0-*"
+    dotnet add frontend/frontend.csproj package Tye2.Extensions.Configuration
     ```
 
 5. Now register this client in `frontend` by adding the following to the existing code in the `Program.cs` file:
 
    ```C#
+   using Tye2;
    ...
-   
+
    services.AddRazorPages();
    /** Add the following to wire the client to the backend **/
    services.AddHttpClient<WeatherClient>(client =>
