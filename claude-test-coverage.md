@@ -74,6 +74,18 @@ Phase 8 (CLI commands) — CLI command structure, StandardOptions, ApplicationFa
 
 ---
 
+## Coverage Script
+
+`run-coverage.ps1` runs each test method individually with per-test PASS/FAIL output.
+
+```powershell
+./run-coverage.ps1                          # all unit tests
+./run-coverage.ps1 -E2E                     # only E2E tests
+./run-coverage.ps1 -E2E -Class TyeRunTests  # only TyeRunTests class
+./run-coverage.ps1 -E2E -Class TyeRunTests -Method NginxIngressTest  # single method
+./run-coverage.ps1 -Unit -E2E               # both unit and E2E
+```
+
 ## Coverage Analysis (from cobertura XML, 2026-03-11)
 
 ### Well Covered (>80%) — No action needed

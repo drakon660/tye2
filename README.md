@@ -1,5 +1,45 @@
 # Session Summary
 
+## 2026-03-15
+
+Completed work (March 14–15):
+
+### .NET 10 upgrade
+- Upgraded `Directory.Build.props` from `net8.0`/LangVersion 12.0 to `net10.0`/LangVersion 14.0 (src projects only, not test projects).
+- Upgraded `Microsoft.Extensions.Logging` to 10.0.0/10.0.5 across Tye2.Core and Tye2.Hosting.Diagnostics.
+- Upgraded `Microsoft.Extensions.Configuration` from 2.1.1 to 10.0.5 in Tye2.Extensions.Configuration.
+- Upgraded `Microsoft.Extensions.FileProviders.Embedded` from 8.0.2 to 10.0.5 in Tye2.Hosting.
+- Upgraded `Refit.HttpClientFactory` from 7.0.0 to 10.0.1 in E2E tests.
+
+### Package updates
+- Upgraded `Serilog.Sinks.Console` to 6.1.1, `Serilog.Sinks.Elasticsearch` to 10.0.0, `Serilog.Sinks.Seq` to 9.0.0.
+- Upgraded `semver` to 3.0.0, `ResxSourceGenerator` to 5.0.0-1.25277.114 (later removed).
+- Upgraded `Newtonsoft.Json` to 13.0.4.
+
+### ResxSourceGenerator removal
+- Removed `Microsoft.CodeAnalysis.ResxSourceGenerator` package from Tye2.Core.
+- Checked in `CoreStrings.Designer.cs` as a regular source file for full IDE navigation support (Rider couldn't index source-generator-only output).
+
+### Coverage script improvements
+- Rewrote `run-coverage.ps1` to run each test method individually with per-test PASS/FAIL reporting.
+- Added `-Class` filter (e.g. `-Class TyeRunTests`) to run only methods in a specific test class.
+- Added `-Method` filter (e.g. `-Method NginxIngressTest`) to run a single test method.
+- Changed `-E2E` flag to run only E2E tests (was additive, now exclusive).
+- Added `-Unit` flag for explicit unit test selection.
+- Fixed Ctrl+C handling — script now kills child `dotnet test` processes and exits cleanly.
+- Fixed `ProcessStartInfo` working directory for correct project path resolution.
+- Fixed parameterized test name handling (strip parameters, deduplicate, exact FQN match).
+
+### Documentation updates
+- Updated 15 markdown files replacing `Microsoft.Tye` → `tye2`, `dotnet/tye` → `drakon660/tye2` URLs.
+- Fixed VitePress config social link from `vuejs/vitepress` to `drakon660/tye2`.
+- Created `docs-serve.cmd` and `docs-serve.sh` scripts for VitePress dev server.
+
+### Issue backlog
+- Scanned 377 open issues from original dotnet/tye repository.
+- Extracted 176 actionable issues (63 bugs, 45 enhancements, 78 feature requests) into `issues-backlog.md`.
+- Generated `tye-issues.csv` with valid issue numbers.
+
 ## 2026-03-13
 
 Completed work this week (March 8–13):

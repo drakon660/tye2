@@ -1,4 +1,4 @@
-next-version: 0.11.0
+next-version: 0.12.0
 workflow: GitHubFlow/v1
 commit-message-incrementing: Disabled
 strategies:
