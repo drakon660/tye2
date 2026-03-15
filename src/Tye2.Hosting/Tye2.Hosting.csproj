@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="Bedrock.Framework" Version="0.1.63-alpha.gf69fa1b135" />
-    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.5" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="System.Reactive" Version="6.1.0" />
