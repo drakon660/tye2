@@ -9,13 +9,7 @@
     <!-- Hoisted to avoid a conflict with Microsoft.Build -->
 
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-
-    <!-- RG 2024-02-19 #7 - needed to generate resx codebehind without MS Arcade build -->
-    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
