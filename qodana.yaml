@@ -9,6 +9,8 @@ profile:
 dotnet:
   solution: tye2.sln
   configuration: Release
+bootstrap: |
+  dotnet sln tye2.sln remove $(find test -name "*.csproj")
 exclude:
   - name: CheckDependencyLicenses
   - name: All
