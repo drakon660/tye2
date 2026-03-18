@@ -1,5 +1,28 @@
 # Session Summary
 
+## 2026-03-18
+
+Completed work since 2026-03-15:
+
+### Qodana code quality automation
+- Added `.github/workflows/qodana_code_quality.yml` as a manual GitHub Actions workflow for JetBrains Qodana scans.
+- Added `qodana.yaml` with the `jetbrains/qodana-cdnet:2025.3-eap` linter, `qodana.recommended` profile, and Release solution build settings.
+- Configured the workflow to cache the Qodana Docker image between runs to reduce repeated pull time in CI.
+- Mounted the host GitHub Actions .NET SDK into the Qodana container so MSBuild-based analysis can run against the repository solution.
+- Enabled `continue-on-error` for the Qodana scan step so Community plan limitations do not hard-fail the workflow run.
+
+### Test project handling for analysis
+- Excluded the `test` folder in `qodana.yaml`.
+- Added a workflow step that removes test projects from `tye2.sln` before the scan, replacing earlier bootstrap-style filtering attempts.
+
+### Repository hygiene
+- Updated branch cleanup logic to protect `main`, `develop`, and the default branch while allowing cleanup candidates beyond the older hard-coded branch-prefix list.
+- Added `.DS_Store` and `.claude/settings.local.json` to `.gitignore`.
+
+### Merged PRs
+- PR #80 merged on 2026-03-18: introduced the initial Qodana automation workflow and scan configuration.
+- PR #81 merged on 2026-03-18: refined the Qodana setup, including cleanup logic and host .NET SDK mounting for analysis.
+
 ## 2026-03-15
 
 Completed work (March 14–15):
@@ -39,6 +62,10 @@ Completed work (March 14–15):
 - Scanned 377 open issues from original dotnet/tye repository.
 - Extracted 176 actionable issues (63 bugs, 45 enhancements, 78 feature requests) into `issues-backlog.md`.
 - Generated `tye-issues.csv` with valid issue numbers.
+
+### Merged PRs
+- PR #78 merged on 2026-03-15: brought in the .NET 10 upgrade and related package alignment work.
+- PR #79 merged on 2026-03-15: added GitHub issue export tooling and follow-up repository documentation updates.
 
 ## 2026-03-13
 
