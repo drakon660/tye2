@@ -47,6 +47,7 @@ jobs:
         continue-on-error: true
         with:
           upload-result: true
+          args: --mount type=bind,source=${{ env.DOTNET_ROOT }},target=/usr/share/dotnet,readonly
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_1871052997 }}
           QODANA_ENDPOINT: https://qodana.cloud
