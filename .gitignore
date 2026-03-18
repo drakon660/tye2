@@ -1,3 +1,5 @@
+.DS_Store
+.claude/settings.local.json
 .dotnet/
 artifacts/
 .tye/
@@ -46,6 +48,9 @@ Generated\ Files/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
+
+# Code coverage reports
+coveragereport/
 [Bb]uild[Ll]og.*
 
 # NUnit

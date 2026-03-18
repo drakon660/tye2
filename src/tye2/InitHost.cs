@@ -1,4 +1,5 @@
-﻿using System.IO;
+using System;
+using System.IO;
 using Tye2.Core;
 using Tye2.Core.ConfigModel;
 using Tye2.Core.Serialization;
@@ -74,6 +75,7 @@ namespace Tye2
                 var serializer = YamlSerializer.CreateSerializer();
 
                 var extension = path.Extension.ToLowerInvariant();
+                var fileName = path.Name;
                 var directory = path.Directory;
 
                 // Clear all bindings if any for solutions and project files
@@ -96,8 +98,11 @@ namespace Tye2
                 }
                 else
                 {
-                    // If the input file is a yaml, then replace it.
-                    outputFilePath = path.FullName;
+                    // For docker-compose inputs, generate tye.yaml next to compose file.
+                    // For other yaml inputs (e.g. tye.yaml), replace the input file.
+                    outputFilePath = fileName.Contains("docker-compose", StringComparison.OrdinalIgnoreCase)
+                        ? Path.Combine(directory!.FullName, "tye.yaml")
+                        : path.FullName;
                 }
 
                 template = """

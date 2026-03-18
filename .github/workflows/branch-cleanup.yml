@@ -31,7 +31,7 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const prefixes = ["feature/", "bugfix/", "hotfix/", "codex/feature/", "codex/bugfix/", "codex/hotfix/"];
+            const protectedNames = ["main", "develop"];
             const dryRun = String(process.env.DRY_RUN).toLowerCase() === "true";
             const minDays = Number.parseInt(process.env.MIN_DAYS ?? "7", 10);
             const now = new Date();
@@ -52,7 +52,7 @@ jobs:
             });
 
             const candidates = branches.filter((branch) =>
-              prefixes.some((prefix) => branch.name.startsWith(prefix))
+              !protectedNames.includes(branch.name) && branch.name !== defaultBranch
             );
 
             const deleted = [];

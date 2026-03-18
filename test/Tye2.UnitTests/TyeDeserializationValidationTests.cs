@@ -1,4 +1,6 @@
-﻿using System.IO;
+using AwesomeAssertions;
+using System;
+using System.IO;
 using Tye2.Core;
 using Tye2.Core.Serialization;
 using Xunit;
@@ -21,8 +23,8 @@ ingress:
 
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(CoreStrings.FormatMultipleBindingWithoutName("ingress"), exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMultipleBindingWithoutName("ingress"));
         }
 
         [Fact]
@@ -39,8 +41,8 @@ services:
 
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(CoreStrings.FormatMultipleBindingWithoutName("service"), exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMultipleBindingWithoutName("service"));
         }
 
         [Fact]
@@ -59,8 +61,8 @@ ingress:
 
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(CoreStrings.FormatMultipleBindingWithSameName("ingress"), exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMultipleBindingWithSameName("ingress"));
         }
 
 
@@ -77,8 +79,8 @@ ingress:
 
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(CoreStrings.IngressBindingMustBeHttpOrHttps, exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.IngressBindingMustBeHttpOrHttps);
         }
 
         [Fact]
@@ -97,8 +99,8 @@ services:
 
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(CoreStrings.FormatMultipleBindingWithSameName("service"), exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMultipleBindingWithSameName("service"));
         }
 
         [Fact]
@@ -124,8 +126,8 @@ ingress:
 
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(CoreStrings.IngressRuleMustReferenceService, exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.IngressRuleMustReferenceService);
         }
 
         [Fact]
@@ -144,8 +146,8 @@ ingress:
 
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(CoreStrings.FormatMultipleBindingWithSamePort("ingress"), exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMultipleBindingWithSamePort("ingress"));
         }
 
 
@@ -165,8 +167,8 @@ services:
 
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(CoreStrings.FormatMultipleBindingWithSamePort("service"), exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMultipleBindingWithSamePort("service"));
         }
 
         [Fact]
@@ -204,7 +206,7 @@ services:
 
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            Assert.Throws<TyeYamlException>(() => app.Validate());
+            ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>();
         }
 
         [Fact]
@@ -221,8 +223,8 @@ services:
             var errorMessage = "A service name must consist of lower case alphanumeric";
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(errorMessage, exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(errorMessage);
         }
 
         [Fact]
@@ -239,8 +241,8 @@ services:
             var errorMessage = "Name cannot be more that 63 characters long.";
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(errorMessage, exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(errorMessage);
         }
 
         [Fact]
@@ -254,8 +256,8 @@ services:
             var errorMessage = CoreStrings.FormatProberRequired("liveness");
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(errorMessage, exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(errorMessage);
         }
 
         [Fact]
@@ -271,8 +273,8 @@ services:
             var errorMessage = CoreStrings.FormatSuccessThresholdMustBeOne("liveness");
             using var parser = new YamlParser(input);
             var app = parser.ParseConfigApplication();
-            var exception = Assert.Throws<TyeYamlException>(() => app.Validate());
-            Assert.Contains(errorMessage, exception.Message);
+            var exception = ((Action)(() => app.Validate())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(errorMessage);
         }
 
         [Fact]
@@ -285,11 +287,11 @@ flimflam";
             try
             {
                 parser.ParseConfigApplication();
-                Assert.False(true, "YML parsing exception expected with supplied input");
+                true.Should().BeFalse("YML parsing exception expected with supplied input");
             }
             catch (TyeYamlException e)
             {
-                Assert.StartsWith("Error parsing 'foobar.yml': (2, 1): Unexpected node type in the tye configuration file.", e.Message);
+                e.Message.Should().StartWith("Error parsing 'foobar.yml': (2, 1): Unexpected node type in the tye configuration file.");
             }
         }
 
@@ -309,3 +311,9 @@ services:
         }
     }
 }
+
+
+
+
+
+

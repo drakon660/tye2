@@ -1,0 +1,52 @@
+name: Qodana
+on:
+  workflow_dispatch:
+
+jobs:
+  qodana:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # a full history is required for pull request analysis
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache Qodana Docker image
+        id: qodana-image-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/qodana-image.tar
+          key: qodana-image-cdnet-2025.3-eap
+
+      - name: Load cached Qodana image
+        if: steps.qodana-image-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/qodana-image.tar
+
+      - name: Pull and save Qodana image
+        if: steps.qodana-image-cache.outputs.cache-hit != 'true'
+        run: |
+          docker pull jetbrains/qodana-cdnet:2025.3-eap
+          docker save jetbrains/qodana-cdnet:2025.3-eap -o /tmp/qodana-image.tar
+
+      - name: Remove test projects from solution
+        run: |
+          for proj in $(find test -name "*.csproj"); do
+            dotnet sln tye2.sln remove "$proj" || true
+          done
+
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@v2025.3
+        continue-on-error: true
+        with:
+          upload-result: true
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_1871052997 }}
+          QODANA_ENDPOINT: https://qodana.cloud

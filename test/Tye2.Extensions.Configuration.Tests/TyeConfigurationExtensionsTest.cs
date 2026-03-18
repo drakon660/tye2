@@ -13,7 +13,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetConnectionString_WithoutBinding_GetsConnectionString()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "connectionstrings:myservice", "expected" }
             });
@@ -28,7 +28,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetConnectionString_WithoutBinding_DoesNotCombineHostAndPort()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "service:myservice:host", "example.com" },
                 { "service:myservice:port", "443" }
@@ -44,7 +44,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetConnectionString_WithBinding_GetsConnectionString()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "connectionstrings:myservice:http", "expected" }
             });
@@ -59,7 +59,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetConnectionString_WithBinding_DoesNotMatchOtherBinding()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "connectionstrings:myservice:https", "expected" }
             });
@@ -74,7 +74,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetConnectionString_WithBinding_DoesNotMatchDefaultBinding()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "connectionstrings:myservice", "expected" }
             });
@@ -89,7 +89,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetConnectionString_WithBinding_DoesNotCombineHostAndPort()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "service:myservice:http:host", "example.com" },
                 { "service:myservice:http:port", "443" }
@@ -105,7 +105,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetServiceUri_WithoutBinding_IgnoresConnectionStringIfSet()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "connectionstrings:myservice", "https://example.com" },
                 { "service:myservice:protocol", "http" },
@@ -123,7 +123,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetServiceUri_WithoutBinding_ReturnsNullIfNotFound()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "service:anotherservice:protocol", "https" },
                 { "service:anotherservice:host", "expected.example.com" },
@@ -140,7 +140,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetServiceUri_WithoutBinding_CombinesHostAndPort()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "service:myservice:protocol", "https" },
                 { "service:myservice:host", "expected.example.com" },
@@ -157,7 +157,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetServiceUri_WithoutBinding_WithHttpAsDefaultProtocol()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "service:myservice:host", "expected.example.com" },
                 { "service:myservice:port", "5000" },
@@ -173,7 +173,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetServiceUri_WithoutBinding_WithoutHost_ReturnsNull()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "service:myservice:protocol", "https" },
                 { "service:myservice:port", "5000" },
@@ -189,7 +189,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetServiceUri_WithoutBinding_WithoutPort_ReturnsNull()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "service:myservice:protocol", "https" },
                 { "service:myservice:host", "example.com" },
@@ -205,7 +205,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetServiceUri_InvalidValues_Throws()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "service:myservice:protocol", "https" },
                 { "service:myservice:host", "@#*$&$(" },
@@ -221,7 +221,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetServiceUri_WithBinding_IgnoresConnectionStringIfSet()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "connectionstrings:myservice:metrics", "https://example.com" },
                 { "service:myservice:metrics:protocol", "http" },
@@ -239,7 +239,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetServiceUri_WithBinding_CombinesHostAndPort()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "service:myservice:metrics:protocol", "https" },
                 { "service:myservice:metrics:host", "expected.example.com" },
@@ -256,7 +256,7 @@ namespace Tye2.Extensions.Configuration.Tests
         public void GetServiceUri_WithBinding_IgnoresDefaultBinding()
         {
             var builder = new ConfigurationBuilder();
-            builder.AddInMemoryCollection(new Dictionary<string, string>()
+            builder.AddInMemoryCollection(new Dictionary<string, string?>()
             {
                 { "service:myservice:host", "expected.example.com" },
                 { "service:myservice:port", "5000" },

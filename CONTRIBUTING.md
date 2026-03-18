@@ -6,7 +6,7 @@ You can also contribute by submitting pull requests with code changes to address
 
 ## General feedback and discussions?
 
-Create a [feedback issue](https://github.com/dotnet/tye/issues/new?template=feedback.md).
+Create a [feedback issue](https://github.com/drakon660/tye2/issues/new?template=feedback.md).
 
 We know that there's a lot of diversity in how people work, think, and organize projects. We'd love to know if tye is a good fit for the way that you do your best work.
 
@@ -14,19 +14,19 @@ If we don't have follow up discussions or questions, we'll probably close your i
 
 ---
 
-Or if there's a top if you want to discuss, create a [discussion issue](https://github.com/dotnet/tye/issues/new?template=discussion.md).
+Or if there's a top if you want to discuss, create a [discussion issue](https://github.com/drakon660/tye2/issues/new?template=discussion.md).
 
 Feel free to create discussion issues if there's something you want to ask about. We may close your issue if there's an easy answer, or we may leave it open so that others are encouraged to comment and share their point of view.
 
 ## Bugs and feature requests?
 
-For non-security related bugs, log a new [bug issue](https://github.com/dotnet/tye/issues/new?template=bug.md). 
+For non-security related bugs, log a new [bug issue](https://github.com/drakon660/tye2/issues/new?template=bug.md). 
 
 Keep in mind that tye is an experimental project. We do care about the quality of the features that we're building, but we don't plan to address every bug quickly because the lifespan of the project is short.
 
 ---
 
-For feature requests, log a new [idea issue](https://github.com/dotnet/tye/issues/new?template=idea.md).
+For feature requests, log a new [idea issue](https://github.com/drakon660/tye2/issues/new?template=idea.md).
 
 Tye is an experimental project with a short roadmap. We plan to at least be honest about what ideas we think we can accomplish within the scope of the project. We might say no, or "not now" to lots of ideas as a result.
 
@@ -38,9 +38,9 @@ Security issues and bugs should be reported privately, via email, to the Microso
 
 We accept fixes and features! Here are some resources to help you get started on how to contribute code or new content.
 
-* Look at the [Developer documentation](/docs/developer_guide.md) to get started on building the source code on your own.
-* ["Help wanted" issues](https://github.com/dotnet/tye/labels/help%20wanted) - these issues are up for grabs. Comment on an issue if you want to create a fix.
-* ["Good first issue" issues](https://github.com/dotnet/tye/labels/good%20first%20issue) - we think these are a good for newcomers.
+* Look at the [Developer documentation](/docs/developer-guide.md) to get started on building the source code on your own.
+* ["Help wanted" issues](https://github.com/drakon660/tye2/labels/help%20wanted) - these issues are up for grabs. Comment on an issue if you want to create a fix.
+* ["Good first issue" issues](https://github.com/drakon660/tye2/labels/good%20first%20issue) - we think these are a good for newcomers.
 
 ### Before you send a pull request
 
@@ -59,7 +59,7 @@ You will need to sign a [Contributor License Agreement](https://cla.dotnetfounda
 
 If you don't know what a pull request is read this article: https://help.github.com/articles/using-pull-requests. Make sure the repository can build and all tests pass. 
 
-Familiarize yourself with the [developer guide](/docs/developer_guide.md) for information about how to work with the repository.
+Familiarize yourself with the [developer guide](/docs/developer-guide.md) for information about how to work with the repository.
 
 
 #### Branch strategy (Git Flow)

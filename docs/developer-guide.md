@@ -21,7 +21,7 @@ Our integration tests will make use of Docker's command line tools for some func
 For a new copy of the project, run:
 
 ```sh
-git clone https://github.com/dotnet/tye
+git clone https://github.com/drakon660/tye2
 ```
 
 ## Opening in Visual Studio
@@ -141,5 +141,5 @@ On macOS/Linux:
 2. Install the package
 
 ```sh
-dotnet tool install microsoft.tye -g --version "0.6.0-dev" --add-source ./artifacts/packages/Debug/Shipping
+dotnet tool install tye2 -g --add-source ./artifacts/packages/Debug/Shipping
 ```

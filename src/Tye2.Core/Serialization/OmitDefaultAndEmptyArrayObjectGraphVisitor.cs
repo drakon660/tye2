@@ -26,7 +26,7 @@ namespace Tye2.Core.Serialization
             return value is ICollection collection && collection.Count == 0;
         }
 
-        public override bool EnterMapping(IPropertyDescriptor key, IObjectDescriptor value, IEmitter context)
+        public override bool EnterMapping(IPropertyDescriptor key, IObjectDescriptor value, IEmitter context, ObjectSerializer serializer)
         {
             var defaultValueAttribute = key.GetCustomAttribute<DefaultValueAttribute>();
 
@@ -36,7 +36,7 @@ namespace Tye2.Core.Serialization
 
             return !Equals(value.Value, defaultValue)
                    && !IsEmptyArray(value.Value)
-                   && base.EnterMapping(key, value, context);
+                   && base.EnterMapping(key, value, context, serializer);
         }
     }
 }
