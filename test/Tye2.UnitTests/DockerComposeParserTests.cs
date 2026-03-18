@@ -1,7 +1,7 @@
+using AwesomeAssertions;
 using System;
 using System.IO;
 using System.Linq;
-using AwesomeAssertions;
 using Tye2.Core;
 using Tye2.Core.DockerCompose;
 using Tye2.Core.Serialization;
@@ -77,8 +77,68 @@ services:
     image: redis
 ");
             var app = parser.ParseConfigApplication();
-            app.Services.Should().HaveCount(3);
-            app.Services.Select(s => s.Name).Should().BeEquivalentTo("web", "db", "cache");
+            app.Services.Count.Should().Be(3);
+            var names = app.Services.Select(s => s.Name).OrderBy(n => n).ToList();
+            names.Should().Contain("cache");
+            names.Should().Contain("db");
+            names.Should().Contain("web");
+        }
+
+        // =====================================================================
+        // Scalar Helpers
+        // =====================================================================
+
+        [Fact]
+        public void GetScalarValue_ScalarNode_ReturnsValue()
+        {
+            var value = DockerComposeParser.GetScalarValue(new YamlScalarNode("hello"));
+
+            value.Should().Be("hello");
+        }
+
+        [Fact]
+        public void GetScalarValue_NonScalarNode_Throws()
+        {
+            var ex = ((Action)(() => DockerComposeParser.GetScalarValue(new YamlSequenceNode())))
+                .Should().Throw<TyeYamlException>().Which;
+
+            ex.Message.Should().Contain(CoreStrings.FormatUnexpectedType(
+                YamlNodeType.Scalar.ToString(),
+                YamlNodeType.Sequence.ToString()));
+        }
+
+        [Fact]
+        public void GetScalarValue_WithKey_ScalarNode_ReturnsValue()
+        {
+            var value = DockerComposeParser.GetScalarValue("name", new YamlScalarNode("service-a"));
+
+            value.Should().Be("service-a");
+        }
+
+        [Fact]
+        public void GetScalarValue_WithKey_NonScalarNode_Throws()
+        {
+            var ex = ((Action)(() => DockerComposeParser.GetScalarValue("name", new YamlMappingNode())))
+                .Should().Throw<TyeYamlException>().Which;
+
+            ex.Message.Should().Contain(CoreStrings.FormatExpectedYamlScalar("name"));
+        }
+
+        [Fact]
+        public void ThrowIfNotYamlSequence_SequenceNode_DoesNotThrow()
+        {
+            var act = () => DockerComposeParser.ThrowIfNotYamlSequence("ports", new YamlSequenceNode());
+
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void ThrowIfNotYamlSequence_NonSequenceNode_Throws()
+        {
+            var ex = ((Action)(() => DockerComposeParser.ThrowIfNotYamlSequence("ports", new YamlScalarNode("8080"))))
+                .Should().Throw<TyeYamlException>().Which;
+
+            ex.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("ports"));
         }
 
         // =====================================================================
@@ -131,7 +191,27 @@ services:
       - 8080:8080
 ");
             var app = parser.ParseConfigApplication();
-            app.Services.Single().Bindings.Should().HaveCount(3);
+            app.Services.Single().Bindings.Count.Should().Be(3);
+        }
+
+        [Fact]
+        public void Parse_Ports_MultiplePorts_AssignsBindingNames()
+        {
+            using var parser = new DockerComposeParser(@"
+services:
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+      - 15692:15692
+");
+            var app = parser.ParseConfigApplication();
+            var bindings = app.Services.Single().Bindings;
+
+            bindings.Should().HaveCount(3);
+            bindings.Select(b => b.Name).Should().OnlyContain(name => !string.IsNullOrWhiteSpace(name));
+            bindings.Select(b => b.Name).Should().OnlyHaveUniqueItems();
         }
 
         [Fact]
@@ -146,14 +226,66 @@ services:
       - 9090:90
 ");
             var app = parser.ParseConfigApplication();
-            app.Services.Single().Bindings.Should()
-                .AllSatisfy(b => b.Protocol.Should().Be("http"));
+            app.Services.Single().Bindings.Should().OnlyContain(b => b.Protocol == "http");
+        }
+
+        [Fact]
+        public void Parse_Ports_RangeSyntax_ParsesExpandedBindings()
+        {
+            using var parser = new DockerComposeParser(@"
+services:
+  mongo:
+    image: mongo
+    ports:
+      - 27017-27019:27017-27019
+");
+            var app = parser.ParseConfigApplication();
+            var bindings = app.Services.Single().Bindings;
+            bindings.Should().HaveCount(3);
+            bindings.Select(b => b.Port).Should().Equal(27017, 27018, 27019);
+            bindings.Select(b => b.ContainerPort).Should().Equal(27017, 27018, 27019);
+            bindings.Should().OnlyContain(b => b.Protocol == "http");
+        }
+
+        [Fact]
+        public void Parse_Ports_RangeSyntax_AssignsBindingNames()
+        {
+            using var parser = new DockerComposeParser(@"
+services:
+  mongo:
+    image: mongo
+    ports:
+      - 27017-27019:27017-27019
+");
+            var app = parser.ParseConfigApplication();
+            var bindings = app.Services.Single().Bindings;
+
+            bindings.Should().HaveCount(3);
+            bindings.Select(b => b.Name).Should().OnlyContain(name => !string.IsNullOrWhiteSpace(name));
+            bindings.Select(b => b.Name).Should().OnlyHaveUniqueItems();
+        }
+
+        [Fact]
+        public void Parse_Ports_HostIpMapping_ParsesHostPortAndContainerPort()
+        {
+            using var parser = new DockerComposeParser(@"
+services:
+  mongo:
+    image: mongo
+    ports:
+      - 127.0.0.1:27017:27017
+");
+            var app = parser.ParseConfigApplication();
+            var binding = app.Services.Single().Bindings.Should().ContainSingle().Subject;
+            binding.Host.Should().Be("127.0.0.1");
+            binding.Port.Should().Be(27017);
+            binding.ContainerPort.Should().Be(27017);
+            binding.Protocol.Should().Be("http");
         }
 
         // =====================================================================
         // Environment Parsing — Sequence Format
         // =====================================================================
-
         [Fact]
         public void Parse_Environment_SequenceFormat_KeyValue()
         {
@@ -167,7 +299,7 @@ services:
 ");
             var app = parser.ParseConfigApplication();
             var config = app.Services.Single().Configuration;
-            config.Should().HaveCount(2);
+            config.Count.Should().Be(2);
             config.First(c => c.Name == "POSTGRES_PASSWORD").Value.Should().Be("secret");
             config.First(c => c.Name == "POSTGRES_DB").Value.Should().Be("mydb");
         }
@@ -205,7 +337,7 @@ services:
 ");
             var app = parser.ParseConfigApplication();
             var config = app.Services.Single().Configuration;
-            config.Should().HaveCount(2);
+            config.Count.Should().Be(2);
             config.First(c => c.Name == "POSTGRES_PASSWORD").Value.Should().Be("secret");
             config.First(c => c.Name == "POSTGRES_DB").Value.Should().Be("mydb");
         }
@@ -272,9 +404,8 @@ services:
     build:
       context: {contextDir.Replace('\\', '/')}
 ");
-            var act = () => parser.ParseConfigApplication();
-            act.Should().Throw<TyeYamlException>()
-                .WithMessage("*Multiple proj files*");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain("Multiple proj files");
         }
 
         [Fact]
@@ -301,9 +432,8 @@ services:
     build:
       unknown_key: value
 ");
-            var act = () => parser.ParseConfigApplication();
-            act.Should().Throw<TyeYamlException>()
-                .WithMessage($"*{CoreStrings.FormatUnrecognizedKey("unknown_key")}*");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("unknown_key"));
         }
 
         // =====================================================================
@@ -331,6 +461,37 @@ volumes:
         }
 
         [Fact]
+        public void Parse_VolumesKey_WithSupportedOptions_DoesNotThrow()
+        {
+            using var parser = new DockerComposeParser(@"
+version: '3'
+volumes:
+  data:
+    driver: local
+    labels:
+      purpose: test
+    name: shared-data
+  cache:
+    external: true
+");
+            var app = parser.ParseConfigApplication();
+            app.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Parse_VolumesKey_WithUnknownOption_Throws()
+        {
+            using var parser = new DockerComposeParser(@"
+version: '3'
+volumes:
+  data:
+    unsupported_option: true
+");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("unsupported_option"));
+        }
+
+        [Fact]
         public void Parse_NetworksKey_Ignored()
         {
             using var parser = new DockerComposeParser(@"
@@ -340,6 +501,37 @@ networks:
 ");
             var app = parser.ParseConfigApplication();
             app.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Parse_NetworksKey_WithSupportedOptions_DoesNotThrow()
+        {
+            using var parser = new DockerComposeParser(@"
+version: '3'
+networks:
+  frontend:
+    driver: bridge
+    attachable: true
+    labels:
+      env: test
+  backend:
+    internal: true
+");
+            var app = parser.ParseConfigApplication();
+            app.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Parse_NetworksKey_WithUnknownOption_Throws()
+        {
+            using var parser = new DockerComposeParser(@"
+version: '3'
+networks:
+  frontend:
+    unsupported_network_option: true
+");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("unsupported_network_option"));
         }
 
         [Fact]
@@ -373,9 +565,8 @@ secrets:
 version: '3'
 unknown_top_level: value
 ");
-            var act = () => parser.ParseConfigApplication();
-            act.Should().Throw<TyeYamlException>()
-                .WithMessage($"*{CoreStrings.FormatUnrecognizedKey("unknown_top_level")}*");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("unknown_top_level"));
         }
 
         // =====================================================================
@@ -409,6 +600,52 @@ services:
             app.Services.Should().ContainSingle();
         }
 
+        [Theory]
+        [InlineData("cgroup_parent: parent")]
+        [InlineData("configs: {}")]
+        [InlineData("credential_spec: spec")]
+        [InlineData("deploy: {}")]
+        [InlineData("devices: []")]
+        [InlineData("dns_search: example.local")]
+        [InlineData("endpoint: endpoint")]
+        [InlineData("env_file: .env")]
+        [InlineData("expose: []")]
+        [InlineData("external_links: []")]
+        [InlineData("extra_hosts: []")]
+        [InlineData("healthcheck: {}")]
+        [InlineData("init: true")]
+        [InlineData("isolation: process")]
+        [InlineData("labels: {}")]
+        [InlineData("links: []")]
+        [InlineData("logging: {}")]
+        [InlineData("network_mode: bridge")]
+        [InlineData("networks: {}")]
+        [InlineData("pid: host")]
+        [InlineData("secrets: []")]
+        [InlineData("security_opt: []")]
+        [InlineData("stop_grace_period: 1s")]
+        [InlineData("stop_signal: SIGTERM")]
+        [InlineData("sysctls: {}")]
+        [InlineData("tmpfs: []")]
+        [InlineData("ulimits: {}")]
+        [InlineData("userns_mode: host")]
+        [InlineData("volumes: []")]
+        [InlineData("domainname: example.com")]
+        [InlineData("ipc: host")]
+        [InlineData("mac_address: '00:11:22:33:44:55'")]
+        [InlineData("shm_size: 64m")]
+        public void Parse_Service_AdditionalIgnoredKeys_DoNotThrow(string serviceProperty)
+        {
+            using var parser = new DockerComposeParser($@"
+services:
+  app:
+    image: myapp
+    {serviceProperty}
+");
+            var app = parser.ParseConfigApplication();
+            app.Services.Should().ContainSingle();
+        }
+
         [Fact]
         public void Parse_Service_UnrecognizedKey_Throws()
         {
@@ -418,9 +655,8 @@ services:
     image: myapp
     totally_unknown: value
 ");
-            var act = () => parser.ParseConfigApplication();
-            act.Should().Throw<TyeYamlException>()
-                .WithMessage($"*{CoreStrings.FormatUnrecognizedKey("totally_unknown")}*");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("totally_unknown"));
         }
 
         // =====================================================================
@@ -437,10 +673,14 @@ services:
 ");
             var app = parser.ParseConfigApplication();
             var svc = app.Services.Single();
-            svc.Bindings.Should().NotBeNull().And.BeEmpty();
-            svc.Configuration.Should().NotBeNull().And.BeEmpty();
-            svc.Volumes.Should().NotBeNull().And.BeEmpty();
-            svc.Tags.Should().NotBeNull().And.BeEmpty();
+            svc.Bindings.Should().NotBeNull();
+            svc.Bindings.Should().BeEmpty();
+            svc.Configuration.Should().NotBeNull();
+            svc.Configuration.Should().BeEmpty();
+            svc.Volumes.Should().NotBeNull();
+            svc.Volumes.Should().BeEmpty();
+            svc.Tags.Should().NotBeNull();
+            svc.Tags.Should().BeEmpty();
         }
 
         // =====================================================================
@@ -451,35 +691,31 @@ services:
         public void Parse_InvalidYaml_ThrowsTyeYamlException()
         {
             using var parser = new DockerComposeParser("{ broken yaml [}");
-            var act = () => parser.ParseConfigApplication();
-            act.Should().Throw<TyeYamlException>()
-                .WithMessage("*Unable to parse*");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain("Unable to parse");
         }
 
         [Fact]
         public void Parse_EmptyDocument_Throws()
         {
             using var parser = new DockerComposeParser("");
-            var act = () => parser.ParseConfigApplication();
-            act.Should().ThrowExactly<ArgumentOutOfRangeException>();
+            ((Action)(() => parser.ParseConfigApplication())).Should().Throw<ArgumentOutOfRangeException>();
         }
 
         [Fact]
         public void Parse_RootIsSequence_Throws()
         {
             using var parser = new DockerComposeParser("- item1\n- item2");
-            var act = () => parser.ParseConfigApplication();
-            act.Should().Throw<TyeYamlException>()
-                .WithMessage($"*{CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Sequence.ToString())}*");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Sequence.ToString()));
         }
 
         [Fact]
         public void Parse_RootIsScalar_Throws()
         {
             using var parser = new DockerComposeParser("justascalar");
-            var act = () => parser.ParseConfigApplication();
-            act.Should().Throw<TyeYamlException>()
-                .WithMessage($"*{CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString())}*");
+            var ex = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            ex.Message.Should().Contain(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()));
         }
 
         // =====================================================================
@@ -498,7 +734,8 @@ services:
 ");
             using var parser = new DockerComposeParser(new FileInfo(file));
             var app = parser.ParseConfigApplication();
-            app.Name.Should().NotBeNullOrEmpty();
+            app.Name.Should().NotBeNull();
+            app.Name.Should().NotBeEmpty();
         }
 
         [Fact]
@@ -556,16 +793,17 @@ volumes:
   pgdata:
 ");
             var app = parser.ParseConfigApplication();
-            app.Services.Should().HaveCount(3);
+            app.Services.Count.Should().Be(3);
 
             var web = app.Services.First(s => s.Name == "web");
             web.Image.Should().Be("nginx:alpine");
-            web.Bindings.Should().HaveCount(2);
+            web.Bindings.Count.Should().Be(2);
 
             var api = app.Services.First(s => s.Name == "api");
             api.Image.Should().Be("myapi:latest");
-            api.Bindings.Should().ContainSingle().Which.Port.Should().Be(5000);
-            api.Configuration.Should().HaveCount(2);
+            api.Bindings.Should().ContainSingle();
+            api.Bindings.Single().Port.Should().Be(5000);
+            api.Configuration.Count.Should().Be(2);
 
             var db = app.Services.First(s => s.Name == "db");
             db.Image.Should().Be("postgres:15");
@@ -573,3 +811,12 @@ volumes:
         }
     }
 }
+
+
+
+
+
+
+
+
+

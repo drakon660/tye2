@@ -57,11 +57,11 @@ Next, ensure that Tye and its dependent .NET runtime are installed.
 - name: 🧰 Setup .NET
     uses: actions/setup-dotnet@v1.5.0
     with:
-    dotnet-version: 6.0.100
+    dotnet-version: 8.0.x
 
-- name: 🛠 Install Tye tools
+- name: 🛠 Install Tye2 tools
     run: |
-    dotnet tool install -g Microsoft.Tye --version "0.11.0-alpha.22111.1"
+    dotnet tool install -g tye2
 ```
 
 Using the name of the registry and the [Azure docker action](https://github.com/Azure/docker-login) to login to your registry. This step is needed prior to running the `deploy` command which will build and push the images to the registry. 
@@ -134,11 +134,11 @@ jobs:
     - name: 🧰 Setup .NET Core
       uses: actions/setup-dotnet@v1.5.0
       with:
-        dotnet-version: 3.1.300
+        dotnet-version: 8.0.x
 
-    - name: 🛠 Install Tye tools
+    - name: 🛠 Install Tye2 tools
       run: |
-        dotnet tool install -g Microsoft.Tye --version "0.4.0-alpha.20371.1"
+        dotnet tool install -g tye2
 
     - name: 🔐 Login to ACR
       uses: Azure/docker-login@v1  

@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using Microsoft.Extensions.Configuration;
 
-namespace Microsoft.Extensions.Configuration
+namespace Tye2
 {
     public static class TyeConfigurationExtensions
     {

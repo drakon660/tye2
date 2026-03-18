@@ -1,4 +1,5 @@
-﻿using System;
+using AwesomeAssertions;
+using System;
 using System.IO;
 using System.Linq;
 using Tye2.Core;
@@ -185,11 +186,11 @@ extensions:
 
             var app = parser.ParseConfigApplication();
 
-            Assert.Equal("dapr", app.Extensions.Single()["name"]);
+            app.Extensions.Single()["name"].Should().Be("dapr");
 
             var expected = _deserializer.Deserialize<ConfigApplication>(new StringReader(input));
 
-            Assert.Equal(expected.Extensions.Count, app.Extensions.Count);
+            app.Extensions.Count.Should().Be(expected.Extensions.Count);
         }
 
         [Fact]
@@ -201,11 +202,11 @@ network: test-network";
 
             var app = parser.ParseConfigApplication();
 
-            Assert.Equal("test-network", app.Network);
+            app.Network.Should().Be("test-network");
 
             var expected = _deserializer.Deserialize<ConfigApplication>(new StringReader(input));
 
-            Assert.Equal(expected.Network, app.Network);
+            app.Network.Should().Be(expected.Network);
         }
 
         [Fact]
@@ -257,11 +258,11 @@ services:
             var app = parser.ParseConfigApplication();
             var serviceConfig = app.Services.First().Configuration;
 
-            Assert.Equal(4, serviceConfig.Count);
-            Assert.Equal("value1", serviceConfig.Where(env => env.Name == "env1").First().Value);
-            Assert.Equal("value2", serviceConfig.Where(env => env.Name == "env2").First().Value);
-            Assert.Equal("long string", serviceConfig.Where(env => env.Name == "env3").First().Value);
-            Assert.Equal(string.Empty, serviceConfig.Where(env => env.Name == "env4").First().Value);
+            serviceConfig.Count.Should().Be(4);
+            serviceConfig.Where(env => env.Name == "env1").First().Value.Should().Be("value1");
+            serviceConfig.Where(env => env.Name == "env2").First().Value.Should().Be("value2");
+            serviceConfig.Where(env => env.Name == "env3").First().Value.Should().Be("long string");
+            serviceConfig.Where(env => env.Name == "env4").First().Value.Should().Be(string.Empty);
         }
 
         [Fact]
@@ -283,13 +284,13 @@ services:
             var app = parser.ParseConfigApplication();
             var serviceConfig = app.Services.First().Configuration;
 
-            Assert.Equal(6, serviceConfig.Count);
-            Assert.Equal("value1", serviceConfig.Where(env => env.Name == "env1").First().Value);
-            Assert.Equal("value2", serviceConfig.Where(env => env.Name == "env2").First().Value);
-            Assert.Equal("value3", serviceConfig.Where(env => env.Name == "env3").First().Value);
-            Assert.Equal("long string", serviceConfig.Where(env => env.Name == "env4").First().Value);
-            Assert.Equal("value5", serviceConfig.Where(env => env.Name == "env5").First().Value);
-            Assert.Equal(string.Empty, serviceConfig.Where(env => env.Name == "env6").First().Value);
+            serviceConfig.Count.Should().Be(6);
+            serviceConfig.Where(env => env.Name == "env1").First().Value.Should().Be("value1");
+            serviceConfig.Where(env => env.Name == "env2").First().Value.Should().Be("value2");
+            serviceConfig.Where(env => env.Name == "env3").First().Value.Should().Be("value3");
+            serviceConfig.Where(env => env.Name == "env4").First().Value.Should().Be("long string");
+            serviceConfig.Where(env => env.Name == "env5").First().Value.Should().Be("value5");
+            serviceConfig.Where(env => env.Name == "env6").First().Value.Should().Be(string.Empty);
         }
 
         [Fact]
@@ -310,10 +311,10 @@ services:
             var app = parser.ParseConfigApplication();
             var serviceConfig = app.Services.First().Configuration;
 
-            Assert.Equal(3, serviceConfig.Count);
-            Assert.Equal("value1", serviceConfig.Where(env => env.Name == "env1").First().Value);
-            Assert.Equal("value2", serviceConfig.Where(env => env.Name == "env2").First().Value);
-            Assert.Equal(string.Empty, serviceConfig.Where(env => env.Name == "env3").First().Value);
+            serviceConfig.Count.Should().Be(3);
+            serviceConfig.Where(env => env.Name == "env1").First().Value.Should().Be("value1");
+            serviceConfig.Where(env => env.Name == "env2").First().Value.Should().Be("value2");
+            serviceConfig.Where(env => env.Name == "env3").First().Value.Should().Be(string.Empty);
         }
 
         [Theory]
@@ -334,7 +335,7 @@ services:
             var app = parser.ParseConfigApplication();
             var serviceConfig = app.Services.First().Configuration;
 
-            Assert.Equal(3, serviceConfig.Count);
+            serviceConfig.Count.Should().Be(3);
         }
 
         [Fact]
@@ -347,16 +348,16 @@ services:
         - ./envfile_c.env
 ", new FileInfo(Path.Join(Directory.GetCurrentDirectory(), "testassets", "tye.yaml")));
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatPathNotFound(Path.Join(Directory.GetCurrentDirectory(), "testassets", "envfile_c.env")), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatPathNotFound(Path.Join(Directory.GetCurrentDirectory(), "testassets", "envfile_c.env")));
         }
 
         [Fact]
         public void UnrecognizedConfigApplicationField_ThrowException()
         {
             using var parser = new YamlParser("asdf: 123");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("asdf"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("asdf"));
         }
 
         [Fact]
@@ -367,8 +368,8 @@ services:
 - name: app
   replicas: asdf");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBeAnInteger("replicas"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBeAnInteger("replicas"));
         }
 
         [Fact]
@@ -378,8 +379,8 @@ services:
 @"services:
 - name: app
   replicas: -1");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBePositive("replicas"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBePositive("replicas"));
         }
 
         [Fact]
@@ -389,8 +390,8 @@ services:
 @"name:
 - a: b");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlScalar("name"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlScalar("name"));
         }
 
 
@@ -400,8 +401,8 @@ services:
             using var parser = new YamlParser(
 @"Name: abc");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("Name"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("Name"));
         }
 
         [Fact]
@@ -411,8 +412,8 @@ services:
 @"registry:
 - a: b");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlScalar("registry"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlScalar("registry"));
         }
 
         [Fact]
@@ -421,8 +422,8 @@ services:
             using var parser = new YamlParser(
 @"ingress: a");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlSequence("ingress"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("ingress"));
         }
 
         [Fact]
@@ -431,8 +432,8 @@ services:
             using var parser = new YamlParser(
 @"services: a");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlSequence("services"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("services"));
         }
 
         [Fact]
@@ -441,8 +442,8 @@ services:
             using var parser = new YamlParser(
 @"- name: app
   replicas: -1");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Sequence.ToString()), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Sequence.ToString()));
         }
 
         [Fact]
@@ -451,8 +452,8 @@ services:
             using var parser = new YamlParser(
 @"services:
   - name");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()));
         }
 
         [Fact]
@@ -461,8 +462,8 @@ services:
             using var parser = new YamlParser(
 @"ingress:
   - name");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()));
         }
 
         [Fact]
@@ -471,8 +472,8 @@ services:
             using var parser = new YamlParser(
 @"ingress:
   - replicas: asdf");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBeAnInteger("replicas"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBeAnInteger("replicas"));
         }
 
         [Fact]
@@ -481,8 +482,8 @@ services:
             using var parser = new YamlParser(
 @"ingress:
   - replicas: -1");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBePositive("replicas"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBePositive("replicas"));
         }
 
         [Fact]
@@ -491,8 +492,8 @@ services:
             using var parser = new YamlParser(
 @"ingress:
   - abc: abc");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("abc"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("abc"));
         }
 
         [Fact]
@@ -501,8 +502,8 @@ services:
             using var parser = new YamlParser(
 @"ingress:
   - rules: abc");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlSequence("rules"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("rules"));
         }
 
         [Fact]
@@ -512,8 +513,8 @@ services:
 @"ingress:
   - rules:
     - abc");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()));
         }
 
         [Fact]
@@ -523,8 +524,8 @@ services:
 @"ingress:
   - bindings:
     - abc");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnexpectedType(YamlNodeType.Mapping.ToString(), YamlNodeType.Scalar.ToString()));
         }
 
         [Fact]
@@ -534,8 +535,8 @@ services:
 @"ingress:
   - rules:
     - abc: 123");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("abc"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("abc"));
         }
 
         [Fact]
@@ -544,8 +545,8 @@ services:
             using var parser = new YamlParser(
 @"ingress:
   - bindings: abc");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlSequence("bindings"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("bindings"));
         }
 
         [Fact]
@@ -558,8 +559,8 @@ services:
       - port: abc
         protocol: http
         name: foo");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBeAnInteger("port"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBeAnInteger("port"));
         }
 
         [Fact]
@@ -570,8 +571,8 @@ services:
   - name: ingress
     bindings:
       - abc: abc");
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("abc"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("abc"));
         }
 
 
@@ -583,8 +584,8 @@ services:
   - name: ingress
     tags: abc");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlSequence("tags"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("tags"));
         }
 
         [Fact]
@@ -614,8 +615,8 @@ ingress:
   - name: ingress
     external: abc");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBeABoolean("external"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBeABoolean("external"));
         }
 
         [Fact]
@@ -626,8 +627,8 @@ ingress:
   - name: ingress
     build: abc");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBeABoolean("build"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBeABoolean("build"));
         }
 
         [Fact]
@@ -638,8 +639,8 @@ ingress:
   - name: ingress
     bindings: abc");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlSequence("bindings"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("bindings"));
         }
 
 
@@ -651,8 +652,8 @@ ingress:
   - name: ingress
     volumes: abc");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlSequence("volumes"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("volumes"));
         }
 
         [Fact]
@@ -663,8 +664,8 @@ ingress:
   - name: ingress
     env: abc");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlSequence("env"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("env"));
         }
 
         [Fact]
@@ -675,8 +676,8 @@ ingress:
   - name: ingress
     tags: abc");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlSequence("tags"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("tags"));
         }
 
         [Fact]
@@ -706,8 +707,8 @@ services:
   - name: ingress
     xyz: abc");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("xyz"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("xyz"));
         }
 
         [Theory]
@@ -721,8 +722,8 @@ services:
       {probe}:
         something: something");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("something"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("something"));
         }
 
         [Theory]
@@ -739,8 +740,8 @@ services:
       liveness:
         {field}: 3.5");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBeAnInteger(field), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBeAnInteger(field));
         }
 
         [Theory]
@@ -753,8 +754,8 @@ services:
       liveness:
         {field}: -1");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBePositive(field), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBePositive(field));
         }
 
         [Theory]
@@ -770,8 +771,8 @@ services:
       liveness:
         {field}: 0");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBeGreaterThanZero(field), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBeGreaterThanZero(field));
         }
 
         [Fact]
@@ -784,8 +785,8 @@ services:
         http:
             something: something");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("something"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("something"));
         }
 
         [Fact]
@@ -798,8 +799,8 @@ services:
         http:
             port: 3.5");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatMustBeAnInteger("port"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatMustBeAnInteger("port"));
         }
 
         [Fact]
@@ -812,8 +813,8 @@ services:
         http:
             headers: abc");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatExpectedYamlSequence("headers"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatExpectedYamlSequence("headers"));
         }
 
         [Fact]
@@ -828,8 +829,12 @@ services:
                 - name: header1
                   something: something");
 
-            var exception = Assert.Throws<TyeYamlException>(() => parser.ParseConfigApplication());
-            Assert.Contains(CoreStrings.FormatUnrecognizedKey("something"), exception.Message);
+            var exception = ((Action)(() => parser.ParseConfigApplication())).Should().Throw<TyeYamlException>().Which;
+            exception.Message.Should().Contain(CoreStrings.FormatUnrecognizedKey("something"));
         }
     }
 }
+
+
+
+

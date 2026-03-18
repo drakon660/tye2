@@ -17,7 +17,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
+using AwesomeAssertions;
 using Refit;
 using Tye2.Core;
 using Tye2.E2ETests.Infrastructure;
@@ -97,7 +97,7 @@ name: frontend-backend
 services:
 - name: backend
   azureFunction: backend/  
-  args: start --csharp        
+  args: start --dotnet-isolated
 - name: frontend
   project: frontend/frontend.csproj";
 
@@ -1567,6 +1567,395 @@ services:
                 serverBackendTrace.ParentId.Should().Be(clientFrontendTrace.Id);
                 _output.WriteLine($"[Zipkin] Checking: clientFrontend.ParentId({clientFrontendTrace.ParentId}) == serverFrontend.Id({serverFrontendTrace!.Id})");
                 clientFrontendTrace.ParentId.Should().Be(serverFrontendTrace.Id);
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_ServiceIndex_ReturnsEndpoints()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            };
+
+            var client = new HttpClient(new RetryHandler(handler));
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // GET /api/v1 — service index
+                var indexResponse = await client.GetStringAsync($"{uri}api/v1");
+                var endpoints = JsonSerializer.Deserialize<string[]>(indexResponse, _options);
+                endpoints.Should().NotBeEmpty();
+                endpoints.Should().Contain(e => e.Contains("/api/v1/services"));
+                endpoints.Should().Contain(e => e.Contains("/api/v1/application"));
+                endpoints.Should().Contain(e => e.Contains("/api/v1/metrics"));
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_ApplicationIndex_ReturnsAppInfo()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new RetryHandler(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            }));
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // GET /api/v1/application
+                var appResponse = await client.GetStringAsync($"{uri}api/v1/application");
+                var v1App = JsonSerializer.Deserialize<V1Application>(appResponse, _options);
+                v1App.Should().NotBeNull();
+                v1App!.Name.Should().Be("frontend-backend");
+                v1App.Source.Should().NotBeNullOrEmpty();
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_Services_ReturnsAllServices()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new RetryHandler(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            }));
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // GET /api/v1/services
+                var servicesResponse = await client.GetStringAsync($"{uri}api/v1/services");
+                var services = JsonSerializer.Deserialize<List<V1Service>>(servicesResponse, _options);
+                services.Should().NotBeNull();
+                services!.Count.Should().Be(2);
+                services.Select(s => s.Description!.Name).Should().Contain("backend");
+                services.Select(s => s.Description!.Name).Should().Contain("frontend");
+
+                // Each service should have bindings and replicas
+                foreach (var svc in services)
+                {
+                    svc.Description!.Bindings.Should().NotBeEmpty();
+                    svc.Replicas.Should().NotBeEmpty();
+                    svc.Description.RunInfo.Should().NotBeNull();
+                    svc.Description.RunInfo!.Type.Should().Be(V1RunInfoType.Project);
+                }
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_ServiceByName_ReturnsServiceDetails()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new RetryHandler(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            }));
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // GET /api/v1/services/{name}
+                var serviceResponse = await client.GetStringAsync($"{uri}api/v1/services/backend");
+                var service = JsonSerializer.Deserialize<V1Service>(serviceResponse, _options);
+                service.Should().NotBeNull();
+                service!.Description!.Name.Should().Be("backend");
+                service.Description.Bindings.Should().NotBeEmpty();
+                service.Description.RunInfo!.Type.Should().Be(V1RunInfoType.Project);
+                service.Description.RunInfo.Project.Should().Contain("backend.csproj");
+                service.Replicas.Should().NotBeEmpty();
+
+                // Replica should have state and ports
+                var replica = service.Replicas!.Values.First();
+                replica.State.Should().BeOneOf(ReplicaState.Started, ReplicaState.Ready);
+                replica.Ports.Should().NotBeEmpty();
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_ServiceByName_UnknownReturns404()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            });
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // GET /api/v1/services/{unknown}
+                var response = await client.GetAsync($"{uri}api/v1/services/nonexistent");
+                response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_Logs_ReturnsCachedLogs()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new RetryHandler(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            }));
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // GET /api/v1/logs/{name} — should return JSON array
+                var logsResponse = await client.GetStringAsync($"{uri}api/v1/logs/backend");
+                logsResponse.Should().NotBeNull();
+                // Logs is a JSON array of strings
+                logsResponse.TrimStart().Should().StartWith("[");
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_Logs_UnknownReturns404()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            });
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                var response = await client.GetAsync($"{uri}api/v1/logs/nonexistent");
+                response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_Metrics_ReturnsText()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new RetryHandler(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            }));
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // GET /api/v1/metrics — default is text/plain
+                var metricsResponse = await client.GetAsync($"{uri}api/v1/metrics");
+                metricsResponse.IsSuccessStatusCode.Should().BeTrue();
+                metricsResponse.Content.Headers.ContentType!.MediaType.Should().Be("text/plain");
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_Metrics_ReturnsJsonWhenRequested()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new RetryHandler(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            }));
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // GET /api/v1/metrics with Accept: application/json
+                var request = new HttpRequestMessage(HttpMethod.Get, $"{uri}api/v1/metrics");
+                request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                var metricsResponse = await client.SendAsync(request);
+                metricsResponse.IsSuccessStatusCode.Should().BeTrue();
+                metricsResponse.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
+
+                var body = await metricsResponse.Content.ReadAsStringAsync();
+                var metrics = JsonSerializer.Deserialize<List<V1ServiceMetrics>>(body, _options);
+                metrics.Should().NotBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_MetricsByName_ReturnsServiceMetrics()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new RetryHandler(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            }));
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // GET /api/v1/metrics/{name}
+                var metricsResponse = await client.GetAsync($"{uri}api/v1/metrics/backend");
+                metricsResponse.IsSuccessStatusCode.Should().BeTrue();
+            });
+        }
+
+        [Fact]
+        public async Task DashboardApi_MetricsByName_UnknownReturns404()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            });
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                var response = await client.GetAsync($"{uri}api/v1/metrics/nonexistent");
+                response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            });
+        }
+
+        [Fact]
+        public async Task MultiServiceBindings_ServicesHaveCorrectConfiguration()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("frontend-backend");
+
+            // Create a custom tye.yaml with explicit bindings and env vars
+            var content = @"
+name: frontend-backend
+services:
+- name: backend
+  project: backend/backend.csproj
+  bindings:
+  - port: 7100
+    protocol: http
+  env:
+  - name: CUSTOM_ENV
+    value: backend-value
+- name: frontend
+  project: frontend/frontend.csproj
+  replicas: 2
+  bindings:
+  - port: 8100
+    protocol: http
+  env:
+  - name: CUSTOM_ENV
+    value: frontend-value
+";
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            await File.WriteAllTextAsync(projectFile.FullName, content);
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new RetryHandler(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            }));
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // Verify service count
+                var servicesResponse = await client.GetStringAsync($"{uri}api/v1/services");
+                var services = JsonSerializer.Deserialize<List<V1Service>>(servicesResponse, _options);
+                services.Should().HaveCount(2);
+
+                // Verify backend service
+                var backendResponse = await client.GetStringAsync($"{uri}api/v1/services/backend");
+                var backend = JsonSerializer.Deserialize<V1Service>(backendResponse, _options);
+                backend!.Description!.Bindings.Should().Contain(b => b.Protocol == "http");
+                backend.Description.Replicas.Should().Be(1);
+
+                // Verify frontend has 2 replicas
+                var frontendResponse = await client.GetStringAsync($"{uri}api/v1/services/frontend");
+                var frontend = JsonSerializer.Deserialize<V1Service>(frontendResponse, _options);
+                frontend!.Description!.Replicas.Should().Be(2);
+                frontend.Replicas.Should().HaveCount(2);
+
+                // Each frontend replica should have environment vars
+                foreach (var replica in frontend.Replicas!.Values)
+                {
+                    replica.Environment.Should().NotBeNull();
+                }
+            });
+        }
+
+        [Fact]
+        public async Task SingleProject_RunsSuccessfully()
+        {
+            using var projectDirectory = CopyTestProjectDirectory("single-project");
+
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye.yaml"));
+            var outputContext = new OutputContext(_sink, Verbosity.Debug);
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile);
+
+            var client = new HttpClient(new RetryHandler(new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (a, b, c, d) => true,
+                AllowAutoRedirect = false
+            }));
+
+            await RunHostingApplication(application, new HostOptions(), async (app, uri) =>
+            {
+                // Single service should be accessible via dashboard API
+                var servicesResponse = await client.GetStringAsync($"{uri}api/v1/services");
+                var services = JsonSerializer.Deserialize<List<V1Service>>(servicesResponse, _options);
+                services.Should().HaveCount(1);
+                services![0].Description!.Name.Should().Be("test-project");
+
+                // Service should be reachable
+                var serviceUrl = await GetServiceUrl(client, uri, "test-project");
+                var response = await client.GetAsync(serviceUrl);
+                response.IsSuccessStatusCode.Should().BeTrue();
             });
         }
 

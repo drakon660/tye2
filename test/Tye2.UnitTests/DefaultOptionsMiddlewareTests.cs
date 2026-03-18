@@ -1,4 +1,5 @@
-﻿using System;
+using AwesomeAssertions;
+using System;
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
@@ -68,7 +69,7 @@ namespace Tye2.UnitTests
             _parser.Invoke("xxx --original", _console);
 
             var appliedOptions = OptionsFromConsole;
-            Assert.Contains("--default", appliedOptions);
+            appliedOptions.Should().Contain("--default");
         }
 
         [Fact]
@@ -79,7 +80,7 @@ namespace Tye2.UnitTests
             _parser.Invoke("--original", _console);
 
             var appliedOptions = OptionsFromConsole;
-            Assert.DoesNotContain("--default", appliedOptions);
+            appliedOptions.Should().NotContain("--default");
         }
 
         [Fact]
@@ -90,7 +91,7 @@ namespace Tye2.UnitTests
             _parser.Invoke("xxx yyy --original", _console);
 
             var appliedOptions = OptionsFromConsole;
-            Assert.DoesNotContain("--default", appliedOptions);
+            appliedOptions.Should().NotContain("--default");
         }
 
         [Fact]
@@ -101,7 +102,7 @@ namespace Tye2.UnitTests
             _parser.Invoke("xxx --original", _console);
 
             var appliedOptions = OptionsFromConsole;
-            Assert.DoesNotContain("--default", appliedOptions);
+            appliedOptions.Should().NotContain("--default");
         }
 
         [Fact]
@@ -112,7 +113,7 @@ namespace Tye2.UnitTests
             _parser.Invoke("xxx --original --default", _console);
 
             var appliedOptions = OptionsFromConsole;
-            Assert.Equal(1, appliedOptions.Count(o => o == "--default"));
+            appliedOptions.Count(o => o == "--default").Should().Be(1);
         }
 
         [Fact]
@@ -123,7 +124,10 @@ namespace Tye2.UnitTests
             _parser.Invoke("xxx --original", _console);
 
             var appliedOptions = OptionsFromConsole;
-            Assert.Contains("--implicit:true", appliedOptions);
+            appliedOptions.Should().Contain("--implicit:true");
         }
     }
 }
+
+
+

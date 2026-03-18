@@ -12,7 +12,7 @@ using Microsoft.Rest;
 
 namespace Tye2.Core
 {
-    public sealed class ValidateSecretStep : ApplicationExecutor.ServiceStep
+    public class ValidateSecretStep : ApplicationExecutor.ServiceStep
     {
         public override string DisplayText => "Validating Secrets...";
 
@@ -48,7 +48,7 @@ namespace Tye2.Core
 
                 output.WriteDebugLine($"Validating secret '{secretInputBinding.Name}'.");
 
-                var config = KubernetesClientConfiguration.BuildDefaultConfig();
+                var config = BuildKubernetesClientConfiguration();
 
                 if (!string.IsNullOrEmpty(application.Namespace))
                 {
@@ -58,11 +58,11 @@ namespace Tye2.Core
                 // If namespace is null, set it to default
                 config.Namespace ??= "default";
 
-                var kubernetes = new Kubernetes(config);
+                var kubernetes = CreateKubernetesClient(config);
 
                 try
                 {
-                    var result = await kubernetes.ReadNamespacedSecretWithHttpMessagesAsync(secretInputBinding.Name, config.Namespace);
+                    await ReadSecretAsync(kubernetes, secretInputBinding.Name, config.Namespace);
                     output.WriteInfoLine($"Found existing secret '{secretInputBinding.Name}'.");
                     continue;
                 }
@@ -170,7 +170,7 @@ namespace Tye2.Core
 
                 try
                 {
-                    await kubernetes.CreateNamespacedSecretWithHttpMessagesAsync(secret, config.Namespace);
+                    await CreateSecretAsync(kubernetes, secret, config.Namespace);
                     output.WriteInfoLine($"Created secret '{secret.Metadata.Name}'.");
                 }
                 catch (Exception ex)
@@ -180,6 +180,26 @@ namespace Tye2.Core
                     throw new CommandException("Failed to create secret.", ex);
                 }
             }
+        }
+
+        protected virtual KubernetesClientConfiguration BuildKubernetesClientConfiguration()
+        {
+            return KubernetesClientConfiguration.BuildDefaultConfig();
+        }
+
+        protected virtual Kubernetes CreateKubernetesClient(KubernetesClientConfiguration config)
+        {
+            return new Kubernetes(config);
+        }
+
+        protected virtual async Task ReadSecretAsync(Kubernetes kubernetes, string secretName, string @namespace)
+        {
+            await kubernetes.ReadNamespacedSecretWithHttpMessagesAsync(secretName, @namespace);
+        }
+
+        protected virtual async Task CreateSecretAsync(Kubernetes kubernetes, V1Secret secret, string @namespace)
+        {
+            await kubernetes.CreateNamespacedSecretWithHttpMessagesAsync(secret, @namespace);
         }
     }
 }
