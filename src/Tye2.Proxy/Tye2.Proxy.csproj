@@ -6,6 +6,5 @@
 
   <ItemGroup>
     <PackageReference Include="Bedrock.Framework" Version="0.1.63-alpha.gf69fa1b135" />
-    <PackageReference Include="System.IO.Pipelines" Version="8.0.0" />
   </ItemGroup>
 </Project>
