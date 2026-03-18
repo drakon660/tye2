@@ -9,5 +9,6 @@ profile:
 dotnet:
   solution: tye2.sln
   configuration: Release
+failThreshold: 0
 exclude:
   - name: CheckDependencyLicenses
