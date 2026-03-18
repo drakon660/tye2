@@ -1,11 +1,6 @@
 name: Qodana
 on:
   workflow_dispatch:
-  pull_request:
-  push:
-    branches: # Specify your branches here
-      - develop
-      - 'releases/*' # The release branches
 
 jobs:
   qodana:
