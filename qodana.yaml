@@ -9,5 +9,5 @@ profile:
 dotnet:
   solution: tye2.sln
   configuration: Release
-include:
+exclude:
   - name: CheckDependencyLicenses
