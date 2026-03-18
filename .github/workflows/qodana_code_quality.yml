@@ -41,6 +41,12 @@ jobs:
           docker pull jetbrains/qodana-cdnet:2025.3-eap
           docker save jetbrains/qodana-cdnet:2025.3-eap -o /tmp/qodana-image.tar
 
+      - name: Remove test projects from solution
+        run: |
+          for proj in $(find test -name "*.csproj"); do
+            dotnet sln tye2.sln remove "$proj" || true
+          done
+
       - name: Qodana Scan
         uses: JetBrains/qodana-action@v2025.3
         with:
