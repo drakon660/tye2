@@ -12,3 +12,6 @@ dotnet:
 failThreshold: 0
 exclude:
   - name: CheckDependencyLicenses
+  - name: All
+    paths:
+      - test
