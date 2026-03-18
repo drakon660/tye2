@@ -24,6 +24,23 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Cache Qodana Docker image
+        id: qodana-image-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/qodana-image.tar
+          key: qodana-image-cdnet-2025.3-eap
+
+      - name: Load cached Qodana image
+        if: steps.qodana-image-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/qodana-image.tar
+
+      - name: Pull and save Qodana image
+        if: steps.qodana-image-cache.outputs.cache-hit != 'true'
+        run: |
+          docker pull jetbrains/qodana-cdnet:2025.3-eap
+          docker save jetbrains/qodana-cdnet:2025.3-eap -o /tmp/qodana-image.tar
+
       - name: Qodana Scan
         uses: JetBrains/qodana-action@v2025.3
         with:
