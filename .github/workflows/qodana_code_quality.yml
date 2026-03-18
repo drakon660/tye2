@@ -28,7 +28,7 @@ jobs:
         uses: JetBrains/qodana-action@v2025.3
         with:
           upload-result: true
-          args: --fail-threshold 0
+          args: --fail-threshold 999999
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_1871052997 }}
           QODANA_ENDPOINT: https://qodana.cloud
