@@ -1,0 +1,16 @@
+####################################################################################################################
+# WARNING: Do not store sensitive information in this file, as its contents will be included in the Qodana report. #
+####################################################################################################################
+
+version: "1.0"
+linter: jetbrains/qodana-cdnet:2025.3-eap
+profile:
+  name: qodana.recommended
+dotnet:
+  solution: tye2.sln
+  configuration: Release
+exclude:
+  - name: CheckDependencyLicenses
+  - name: All
+    paths:
+      - test
