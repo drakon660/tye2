@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
-
+using System.Reflection;
 using System.Threading.Tasks;
 using AwesomeAssertions;
 using Microsoft.Extensions.Logging;
@@ -274,6 +275,34 @@ public class ProcessRunnerTests
 
         // Should not throw even when no ProcessInfo exists
         await ProcessRunner.KillProcessAsync(service);
+    }
+
+    [Fact]
+    public void WriteReplicaToStore_RecordsPidAndStartTime()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "tye2-test-" + Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            using var registry = new ReplicaRegistry(tempDir, NullLogger.Instance);
+            var runner = new ProcessRunner(NullLogger.Instance, registry, new ProcessRunnerOptions());
+            var writeReplicaToStore = typeof(ProcessRunner).GetMethod("WriteReplicaToStore", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            writeReplicaToStore.Should().NotBeNull();
+
+            writeReplicaToStore!.Invoke(runner, new object[] { Process.GetCurrentProcess().Id });
+
+            var storePath = Path.Combine(tempDir, ".tye", "process_store");
+            File.Exists(storePath).Should().BeTrue();
+
+            var content = File.ReadAllText(storePath);
+            content.Should().Contain("\"pid\":");
+            content.Should().Contain("\"startTimeUtcTicks\":");
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
     }
 
     // --- Service.State ---
