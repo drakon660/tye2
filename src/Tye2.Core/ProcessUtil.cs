@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -215,6 +216,24 @@ namespace Tye2.Core
         public static Task<ProcessResult> RunAsync(ProcessSpec processSpec, CancellationToken cancellationToken = default, bool throwOnError = true)
         {
             return RunAsync(processSpec.Executable!, processSpec.Arguments!, processSpec.WorkingDirectory, throwOnError: throwOnError, processSpec.EnvironmentVariables, processSpec.OutputData, processSpec.ErrorData, processSpec.OnStart, processSpec.OnStop, cancellationToken);
+        }
+
+        public static bool TryGetProcessStartTimeUtcTicks(int pid, out long startTimeUtcTicks)
+        {
+            startTimeUtcTicks = default;
+
+            try
+            {
+                using var process = Process.GetProcessById(pid);
+                startTimeUtcTicks = process.StartTime.ToUniversalTime().Ticks;
+                return true;
+            }
+            catch (ArgumentException) { }
+            catch (InvalidOperationException) { }
+            catch (NotSupportedException) { }
+            catch (Win32Exception) { }
+
+            return false;
         }
 
         public static void KillProcess(int pid)

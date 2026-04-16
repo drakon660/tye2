@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -21,6 +22,8 @@ namespace Tye2.Hosting
     {
         private const string ProcessReplicaStore = "process";
         private const int MissingFrameworkExitCode = -2147450730;
+        private const string ProcessIdKey = "pid";
+        private const string ProcessStartTimeUtcTicksKey = "startTimeUtcTicks";
 
         private readonly ILogger _logger;
         private readonly ProcessRunnerOptions _options;
@@ -326,7 +329,7 @@ namespace Tye2.Hosting
 
                                 status.Pid = pid;
 
-                                WriteReplicaToStore(pid.ToString());
+                                WriteReplicaToStore(pid);
 
                                 if (_options.ShouldWatchService(serviceName))
                                 {
@@ -552,21 +555,49 @@ namespace Tye2.Hosting
             var processReplicas = await _replicaRegistry.GetEvents(ProcessReplicaStore);
             foreach (var replica in processReplicas)
             {
-                if (int.TryParse(replica["pid"], out var pid))
+                if (!replica.TryGetValue(ProcessIdKey, out var pidValue) ||
+                    !int.TryParse(pidValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var pid))
                 {
-                    ProcessUtil.KillProcess(pid);
-                    _logger.LogInformation("removed process {pid} from previous run", pid);
+                    continue;
                 }
+
+                if (!replica.TryGetValue(ProcessStartTimeUtcTicksKey, out var startTimeValue) ||
+                    !long.TryParse(startTimeValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var recordedStartTimeUtcTicks))
+                {
+                    _logger.LogWarning("Skipping cleanup for process {pid} from previous run because no recorded start time was found.", pid);
+                    continue;
+                }
+
+                if (!ProcessUtil.TryGetProcessStartTimeUtcTicks(pid, out var currentStartTimeUtcTicks))
+                {
+                    continue;
+                }
+
+                if (currentStartTimeUtcTicks != recordedStartTimeUtcTicks)
+                {
+                    _logger.LogWarning("Skipping cleanup for process {pid} from previous run because the recorded start time no longer matches.", pid);
+                    continue;
+                }
+
+                ProcessUtil.KillProcess(pid);
+                _logger.LogInformation("removed process {pid} from previous run", pid);
             }
 
             _replicaRegistry.DeleteStore(ProcessReplicaStore);
         }
 
-        private void WriteReplicaToStore(string pid)
+        private void WriteReplicaToStore(int pid)
         {
+            if (!ProcessUtil.TryGetProcessStartTimeUtcTicks(pid, out var startTimeUtcTicks))
+            {
+                _logger.LogWarning("Could not record process {pid} for previous-run cleanup because its start time could not be read.", pid);
+                return;
+            }
+
             _replicaRegistry.WriteReplicaEvent(ProcessReplicaStore, new Dictionary<string, string>()
             {
-                ["pid"] = pid
+                [ProcessIdKey] = pid.ToString(CultureInfo.InvariantCulture),
+                [ProcessStartTimeUtcTicksKey] = startTimeUtcTicks.ToString(CultureInfo.InvariantCulture)
             });
         }
 
