@@ -4,16 +4,7 @@ Extracted from 377 **open** issues in the original dotnet/tye repository. Filter
 
 ---
 
-## Bugs (63)
-
-### Process Management
-
-| # | Title | Description |
-|---|-------|-------------|
-| 633 | Tye doesn't clean up processes properly | Orphaned processes remain after exit, holding ports |
-| 1088 | Crash on shutdown with many services | ObjectDisposedException for TimerAwaitable on shutdown |
-| 1339 | Service keeps restarting infinitely | Service that runs normally outside tye keeps relaunching |
-| 1417 | Process cleanup kills unrelated processes | Stale PIDs may belong to unrelated applications |
+## Bugs (59)
 
 ### Docker / Containers
 
@@ -57,9 +48,7 @@ Extracted from 377 **open** issues in the original dotnet/tye repository. Filter
 | 422 | ConnectionString ENV leaks to all containers | Env vars for one service injected into all containers |
 | 841 | ConnectionString not resolved with named binding | `GetConnectionString()` returns null with named bindings |
 | 1012 | Dockerfile build ignores dockerFile config value | Always looks for `Dockerfile` regardless of setting |
-| 1033 | YAML parsing errors always report "tye.yaml" | Wrong filename in error messages |
 | 1419 | Multiple env_file entries don't override | Duplicates created instead of overriding |
-| 1515 | Binding routes missing from tye-schema.json | `routes` works but missing from schema |
 | 1534 | Environment variables not parsed in volume mapping | `${MY_VAR}` not expanded in paths |
 | 1585 | Tye ignores ASPNETCORE_ENVIRONMENT | Only sets DOTNET_ENVIRONMENT |
 
@@ -92,7 +81,6 @@ Extracted from 377 **open** issues in the original dotnet/tye repository. Filter
 | 1393 | Dapr sidecar not created for HTTPS services | Disabled with "unbound service" message |
 | 1429 | DAPR_HTTP_PORT and DAPR_GRPC_PORT not set for .NET 6 | Port env vars not injected |
 | 1431 | Dapr extension ignores Azure Function apps | No sidecar started for azureFunction services |
-| 1500 | Dapr per-service args throw YAML parse error | YAML parsing fails for service-level Dapr args |
 | 1603 | Dapr uses deprecated `--components-path` flag | Should use `--resources-path` for Dapr 1.11+ |
 
 ### Miscellaneous
@@ -105,7 +93,6 @@ Extracted from 377 **open** issues in the original dotnet/tye repository. Filter
 | 925 | Tye ignores global.json SDK version | Wrong SDK used for build |
 | 1002 | `tye run` command not recognized | Subcommand fails in certain builds |
 | 1125 | Dashboard "clear logs" doesn't delete logs | Only hides them; they return on navigation |
-| 1138 | Exit code not logged properly | Logs object type instead of exit code number |
 | 1140 | Liveness probe kills container during debugging | Container restarted while debugger attached |
 | 1143 | External repo with Dockerfile in subfolder fails | Dockerfile in subdirectory not found |
 | 1202 | Intermittent "metadata file not found" on startup | Random failure requiring retries |
