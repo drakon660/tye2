@@ -1,13 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Run E2E tests separately per test class to avoid resource contention.
 # Usage: ./run-e2e-tests.sh [class-name]
 # Examples:
 #   ./run-e2e-tests.sh                    # run all classes sequentially
 #   ./run-e2e-tests.sh ProcessRunnerE2E   # run only ProcessRunnerE2ETests
 
-set -e
+set -euo pipefail
 
 PROJECT="test/Tye2.E2ETests"
+FILTER="${1:-}"
 
 TEST_CLASSES=(
     "ApplicationFactoryTests"
@@ -31,12 +32,11 @@ echo ""
 
 PASSED=0
 FAILED=0
-SKIPPED=0
 FAILURES=()
 
 for CLASS in "${TEST_CLASSES[@]}"; do
     # If a filter argument was provided, skip non-matching classes
-    if [[ -n "$1" && "$CLASS" != *"$1"* ]]; then
+    if [[ -n "$FILTER" && "$CLASS" != *"$FILTER"* ]]; then
         continue
     fi
 
@@ -44,7 +44,7 @@ for CLASS in "${TEST_CLASSES[@]}"; do
     echo "Running: $CLASS"
     echo "========================================="
 
-    if dotnet test "$PROJECT" --filter "FullyQualifiedName~$CLASS" --no-build --no-restore 2>&1 | tee /dev/stderr | grep -q "Passed!"; then
+    if dotnet test "$PROJECT" --filter "FullyQualifiedName~$CLASS" --no-build --no-restore; then
         PASSED=$((PASSED + 1))
         echo ">>> $CLASS: PASSED"
     else
