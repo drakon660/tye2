@@ -63,8 +63,11 @@ namespace Tye2.Hosting
 
             var publishCommand = $"publish \"{service.Status.ProjectFilePath}\" --framework {targetFramework} {buildArgs} /nologo";
             
-            //dotnet 6.0 publish has default debug mode when publish is being run, in .net 8.0 is release mode when publish
-            if (targetFramework.Contains("net8") && !buildArgs.Contains("Configuration"))
+            //since .net 8.0 publish defaults to release mode, force debug for local runs
+            if (project.TargetFrameworkName == "net"
+                && Version.TryParse(project.TargetFrameworkVersion, out var frameworkVersion)
+                && frameworkVersion.Major >= 8
+                && !buildArgs.Contains("Configuration"))
             {
                 publishCommand = $"publish \"{service.Status.ProjectFilePath}\" --configuration=Debug  --framework {targetFramework} {buildArgs} /nologo";
             }

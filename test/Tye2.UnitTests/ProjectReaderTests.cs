@@ -191,11 +191,11 @@ EndGlobal";
         try
         {
             var metadataContent = @"AssemblyInformationalVersion:1.2.3
-TargetFramework:net8.0
+TargetFramework:net10.0
 AssemblyName:MyApp
-TargetPath:bin\Debug\net8.0\MyApp.dll
-PublishDir:bin\Debug\net8.0\publish\
-IntermediateOutputPath:obj\Debug\net8.0\
+TargetPath:bin\Debug\net10.0\MyApp.dll
+PublishDir:bin\Debug\net10.0\publish\
+IntermediateOutputPath:obj\Debug\net10.0\
 RunCommand:dotnet
 RunArguments:run
 MicrosoftNETPlatformLibrary:Microsoft.AspNetCore.App
@@ -217,7 +217,7 @@ UsingMicrosoftNETSdkWeb:true";
             ProjectReader.ReadProjectDetails(output, project, metadataFile);
 
             project.Version.Should().Be("1.2.3");
-            project.TargetFramework.Should().Be("net8.0");
+            project.TargetFramework.Should().Be("net10.0");
             project.AssemblyName.Should().Be("MyApp");
             project.RunCommand.Should().Be("dotnet");
             project.RunArguments.Should().Be("run");
@@ -237,11 +237,11 @@ UsingMicrosoftNETSdkWeb:true";
         try
         {
             var metadataContent = @"Version:not-a-version
-TargetFramework:net8.0
+TargetFramework:net10.0
 AssemblyName:MyApp
-TargetPath:bin\Debug\net8.0\MyApp.dll
-PublishDir:bin\Debug\net8.0\publish\
-IntermediateOutputPath:obj\Debug\net8.0\";
+TargetPath:bin\Debug\net10.0\MyApp.dll
+PublishDir:bin\Debug\net10.0\publish\
+IntermediateOutputPath:obj\Debug\net10.0\";
 
             var metadataFile = Path.Combine(tempDir, "metadata.txt");
             File.WriteAllText(metadataFile, metadataContent);
@@ -295,12 +295,12 @@ IntermediateOutputPath:obj\Debug\net8.0\";
         try
         {
             var metadataContent = @"Version:1.0.0
-TargetFramework:net8.0
-TargetFrameworks:net6.0;net7.0;net8.0
+TargetFramework:net10.0
+TargetFrameworks:net6.0;net7.0;net10.0
 AssemblyName:MultiTfm
-TargetPath:bin\Debug\net8.0\MultiTfm.dll
-PublishDir:bin\Debug\net8.0\publish\
-IntermediateOutputPath:obj\Debug\net8.0\";
+TargetPath:bin\Debug\net10.0\MultiTfm.dll
+PublishDir:bin\Debug\net10.0\publish\
+IntermediateOutputPath:obj\Debug\net10.0\";
 
             var metadataFile = Path.Combine(tempDir, "metadata.txt");
             File.WriteAllText(metadataFile, metadataContent);
@@ -316,7 +316,7 @@ IntermediateOutputPath:obj\Debug\net8.0\";
 
             project.TargetFrameworks.Should().HaveCount(3);
             project.TargetFrameworks.Should().Contain("net6.0");
-            project.TargetFrameworks.Should().Contain("net8.0");
+            project.TargetFrameworks.Should().Contain("net10.0");
         }
         finally
         {
@@ -332,7 +332,7 @@ IntermediateOutputPath:obj\Debug\net8.0\";
         {
             var metadataContent = @"InformationalVersion:2.0.0-beta.1
 Version:1.0.0
-TargetFramework:net8.0
+TargetFramework:net10.0
 AssemblyName:MyApp";
 
             var metadataFile = Path.Combine(tempDir, "metadata.txt");
@@ -363,7 +363,7 @@ AssemblyName:MyApp";
         try
         {
             var metadataContent = @"Version:2.3.4
-TargetFramework:net8.0
+TargetFramework:net10.0
 AssemblyName:MyApp";
 
             var metadataFile = Path.Combine(tempDir, "metadata.txt");
@@ -394,9 +394,9 @@ AssemblyName:MyApp";
         try
         {
             var metadataContent = @"Version:1.0.0
-TargetFramework:net8.0
+TargetFramework:net10.0
 ContainerBaseImage:mcr.microsoft.com/dotnet/aspnet
-ContainerBaseTag:8.0";
+ContainerBaseTag:10.0";
 
             var metadataFile = Path.Combine(tempDir, "metadata.txt");
             File.WriteAllText(metadataFile, metadataContent);
@@ -415,7 +415,7 @@ ContainerBaseTag:8.0";
 
             project.ContainerInfo.Should().NotBeNull();
             project.ContainerInfo!.BaseImageName.Should().Be("mcr.microsoft.com/dotnet/aspnet");
-            project.ContainerInfo.BaseImageTag.Should().Be("8.0");
+            project.ContainerInfo.BaseImageTag.Should().Be("10.0");
         }
         finally
         {
@@ -431,10 +431,10 @@ ContainerBaseTag:8.0";
         try
         {
             var metadataContent = @"Version:1.0.0
-TargetFramework:net8.0
-TargetPath:bin/Debug/net8.0/MyApp.dll
-PublishDir:bin/Debug/net8.0/publish/
-IntermediateOutputPath:obj/Debug/net8.0/";
+TargetFramework:net10.0
+TargetPath:bin/Debug/net10.0/MyApp.dll
+PublishDir:bin/Debug/net10.0/publish/
+IntermediateOutputPath:obj/Debug/net10.0/";
 
             var metadataFile = Path.Combine(tempDir, "metadata.txt");
             File.WriteAllText(metadataFile, metadataContent);
@@ -478,9 +478,9 @@ IntermediateOutputPath:obj/Debug/net8.0/";
         try
         {
             var metadataContent = @"Version:1.0.0
-TargetFramework:net8.0
+TargetFramework:net10.0
 _ShortFrameworkIdentifier:.NETCoreApp
-_ShortFrameworkVersion:8.0
+_ShortFrameworkVersion:10.0
 _TargetFrameworkVersionWithoutV:IGNORED";
 
             var metadataFile = Path.Combine(tempDir, "metadata.txt");
@@ -495,7 +495,7 @@ _TargetFrameworkVersionWithoutV:IGNORED";
             ProjectReader.ReadProjectDetails(output, project, metadataFile);
 
             project.TargetFrameworkName.Should().Be(".NETCoreApp");
-            project.TargetFrameworkVersion.Should().Be("8.0");
+            project.TargetFrameworkVersion.Should().Be("10.0");
         }
         finally
         {
@@ -511,8 +511,8 @@ _TargetFrameworkVersionWithoutV:IGNORED";
         try
         {
             var metadataContent = @"Version:1.0.0
-TargetFramework:net8.0
-_TargetFrameworkVersionWithoutV:8.0";
+TargetFramework:net10.0
+_TargetFrameworkVersionWithoutV:10.0";
 
             var metadataFile = Path.Combine(tempDir, "metadata.txt");
             File.WriteAllText(metadataFile, metadataContent);
@@ -526,7 +526,7 @@ _TargetFrameworkVersionWithoutV:8.0";
             ProjectReader.ReadProjectDetails(output, project, metadataFile);
 
             project.TargetFrameworkName.Should().Be("net");
-            project.TargetFrameworkVersion.Should().Be("8.0");
+            project.TargetFrameworkVersion.Should().Be("10.0");
         }
         finally
         {
@@ -542,7 +542,7 @@ _TargetFrameworkVersionWithoutV:8.0";
         try
         {
             var metadataContent = @"Version:1.0.0
-TargetFramework:net8.0
+TargetFramework:net10.0
 FrameworkReference:Microsoft.NETCore.App;Microsoft.AspNetCore.App";
 
             var metadataFile = Path.Combine(tempDir, "metadata.txt");
@@ -572,7 +572,7 @@ FrameworkReference:Microsoft.NETCore.App;Microsoft.AspNetCore.App";
         try
         {
             var metadataContent = @"Version:1.0.0
-TargetFramework:net8.0
+TargetFramework:net10.0
 FrameworkReference:Microsoft.NETCore.App";
 
             var metadataFile = Path.Combine(tempDir, "metadata.txt");

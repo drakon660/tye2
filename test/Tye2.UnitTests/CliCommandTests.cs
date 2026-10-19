@@ -425,7 +425,7 @@ public class CliCommandTests : IDisposable
         var csproj = Path.Combine(_tempDir, "MyApp.csproj");
         File.WriteAllText(csproj, @"<Project Sdk=""Microsoft.NET.Sdk.Web"">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 </Project>");
 
@@ -577,7 +577,7 @@ public class CliCommandTests : IDisposable
         var command = Program.CreateBuildCommand();
         var parser = new CommandLineBuilder(new RootCommand { command }).Build();
 
-        var result = parser.Parse(new[] { "build", "--framework", "net8.0", "nonexistent.csproj" });
+        var result = parser.Parse(new[] { "build", "--framework", "net10.0", "nonexistent.csproj" });
 
         result.Errors.Should().NotContain(e => e.Message.Contains("framework"));
     }

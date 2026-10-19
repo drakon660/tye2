@@ -76,7 +76,7 @@ services:
             var file = CreateTempFile("MyApp.csproj", @"
 <Project Sdk=""Microsoft.NET.Sdk.Web"">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 </Project>");
             var app = ConfigFactory.FromFile(file);
@@ -90,7 +90,7 @@ services:
             var file = CreateTempFile("MyFSharpApp.fsproj", @"
 <Project Sdk=""Microsoft.NET.Sdk.Web"">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 </Project>");
             var app = ConfigFactory.FromFile(file);
@@ -202,7 +202,7 @@ services:
             var file = CreateTempFile("WebApp.csproj", @"
 <Project Sdk=""Microsoft.NET.Sdk.Web"">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 </Project>");
             var app = ConfigFactory.FromFile(file);
@@ -304,7 +304,7 @@ services:
             // Runnable project (has launchSettings)
             var runnableDir = Path.Combine(slnDir, "WebApp");
             Directory.CreateDirectory(runnableDir);
-            File.WriteAllText(Path.Combine(runnableDir, "WebApp.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk.Web\"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>");
+            File.WriteAllText(Path.Combine(runnableDir, "WebApp.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk.Web\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>");
             var propsDir = Path.Combine(runnableDir, "Properties");
             Directory.CreateDirectory(propsDir);
             File.WriteAllText(Path.Combine(propsDir, "launchSettings.json"), "{}");
@@ -312,12 +312,12 @@ services:
             // Console app (has OutputType exe)
             var consoleDir = Path.Combine(slnDir, "Worker");
             Directory.CreateDirectory(consoleDir);
-            File.WriteAllText(Path.Combine(consoleDir, "Worker.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework><OutputType>exe</OutputType></PropertyGroup></Project>");
+            File.WriteAllText(Path.Combine(consoleDir, "Worker.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>exe</OutputType></PropertyGroup></Project>");
 
             // Class library (should be excluded)
             var libDir = Path.Combine(slnDir, "SharedLib");
             Directory.CreateDirectory(libDir);
-            File.WriteAllText(Path.Combine(libDir, "SharedLib.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>");
+            File.WriteAllText(Path.Combine(libDir, "SharedLib.csproj"), "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>");
 
             var slnContent = GenerateSlnContent(new[]
             {
@@ -389,7 +389,7 @@ services:
             Directory.CreateDirectory(projectDir);
 
             var outputTypeTag = outputTypeExe ? "<OutputType>exe</OutputType>" : "";
-            var csprojContent = $"<Project Sdk=\"Microsoft.NET.Sdk.Web\"><PropertyGroup><TargetFramework>net8.0</TargetFramework>{outputTypeTag}</PropertyGroup></Project>";
+            var csprojContent = $"<Project Sdk=\"Microsoft.NET.Sdk.Web\"><PropertyGroup><TargetFramework>net10.0</TargetFramework>{outputTypeTag}</PropertyGroup></Project>";
             File.WriteAllText(Path.Combine(projectDir, $"{projectName}.csproj"), csprojContent);
 
             if (hasLaunchSettings)

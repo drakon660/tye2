@@ -6,5 +6,5 @@ services:
   project: multi-targetframeworks/multi-targetframeworks.csproj
   buildProperties:
     - name: TargetFramework
-      value: net8.0
+      value: net10.0
 
