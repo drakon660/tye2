@@ -1,9 +1,11 @@
-FROM node:alpine as node
+FROM node:16-alpine AS node
 
 WORKDIR /src
-COPY . .
+COPY package.json package-lock.json ./
+RUN npm ci
 
-RUN npm install && npm run build
+COPY . .
+RUN npm run build
 
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/nginx.conf
