@@ -584,7 +584,9 @@ namespace Tye2.Core
                     @$"/p:CustomAfterMicrosoftCommonCrossTargetingTargets=""{projectEvaluationTargets}"" " +
                     $"/nologo",
                 throwOnError: false,
-                workingDirectory: directory.DirectoryPath);
+                // Run from the config root so the same global.json (and SDK) applies as for the later build;
+                // otherwise restore may write project.assets.json in a format the pinned SDK can't read.
+                workingDirectory: configRoot);
 
             // If the build fails, we're not really blocked from doing our work.
             // For now we just log the output to debug. There are errors that occur during
