@@ -7,8 +7,8 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using AwesomeAssertions;
 using k8s;
+using k8s.Autorest;
 using k8s.Models;
-using Microsoft.Rest;
 using Tye2.Core;
 using Xunit;
 

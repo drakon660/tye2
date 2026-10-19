@@ -7,8 +7,8 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using k8s;
+using k8s.Autorest;
 using k8s.Models;
-using Microsoft.Rest;
 
 namespace Tye2.Core
 {
@@ -194,12 +194,12 @@ namespace Tye2.Core
 
         protected virtual async Task ReadSecretAsync(Kubernetes kubernetes, string secretName, string @namespace)
         {
-            await kubernetes.ReadNamespacedSecretWithHttpMessagesAsync(secretName, @namespace);
+            await kubernetes.CoreV1.ReadNamespacedSecretWithHttpMessagesAsync(secretName, @namespace);
         }
 
         protected virtual async Task CreateSecretAsync(Kubernetes kubernetes, V1Secret secret, string @namespace)
         {
-            await kubernetes.CreateNamespacedSecretWithHttpMessagesAsync(secret, @namespace);
+            await kubernetes.CoreV1.CreateNamespacedSecretWithHttpMessagesAsync(secret, @namespace);
         }
     }
 }

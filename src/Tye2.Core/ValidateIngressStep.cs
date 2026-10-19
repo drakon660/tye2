@@ -6,8 +6,8 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using k8s;
+using k8s.Autorest;
 using k8s.Models;
-using Microsoft.Rest;
 
 namespace Tye2.Core
 {
@@ -63,7 +63,7 @@ namespace Tye2.Core
 
             try
             {
-                var result = await kubernetes.ListDeploymentForAllNamespacesWithHttpMessagesAsync(
+                var result = await kubernetes.AppsV1.ListDeploymentForAllNamespacesWithHttpMessagesAsync(
                     labelSelector: "app.kubernetes.io/name in (ingress-nginx, nginx-ingress-controller)");
                 if (result.Body.Items.Count > 0)
                 {
@@ -167,7 +167,7 @@ namespace Tye2.Core
                 try
                 {
                     output.WriteDebugLine("Watching for ingress-nginx controller readiness...");
-                    var response = await kubernetes.ListNamespacedPodWithHttpMessagesAsync(
+                    var response = await kubernetes.CoreV1.ListNamespacedPodWithHttpMessagesAsync(
                         namespaceParameter: "ingress-nginx",
                         labelSelector: "app.kubernetes.io/component=controller,app.kubernetes.io/name=ingress-nginx",
                         watch: true);
