@@ -52,7 +52,7 @@ namespace Worker
 
                             if (data.HasValue)
                             {
-                                var vote = JsonSerializer.Deserialize<Vote>(data);
+                                var vote = JsonSerializer.Deserialize<Vote>(data.ToString());
 
                                 _logger.LogInformation($"Got new vote from redis {vote.vote} {vote.voterId}");
 

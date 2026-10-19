@@ -10,4 +10,4 @@ services:
   project: MultipleTargetFrameworks/MultipleTargetFrameworks.csproj
   buildProperties:
   - name: TargetFramework
-    value: netcoreapp3.1
+    value: net10.0
