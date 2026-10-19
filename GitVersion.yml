@@ -13,19 +13,19 @@ branches:
   main:
     increment: None
   feature:
-    regex: '^features?[/-]'
+    regex: '^features?[/-](?<BranchName>.+)'
     increment: None
   bugfix:
-    regex: '^bugfix(es)?[/-]'
+    regex: '^bugfix(es)?[/-](?<BranchName>.+)'
     increment: None
   hotfix:
-    regex: '^hotfix(es)?[/-]'
+    regex: '^hotfix(es)?[/-](?<BranchName>.+)'
     increment: None
   release:
     regex: '^releases?[/-]'
     increment: None
   pull-request:
-    regex: '^(pull|pull-requests|pr)[/-]'
+    regex: '^(pull|pull-requests|pr)[/-](?<Number>\d*)'
     increment: None
 ignore:
   sha: []
