@@ -6,8 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using k8s;
+using k8s.Autorest;
 using k8s.Models;
-using Microsoft.Rest;
 using Tye2.Core;
 
 namespace Tye2
@@ -70,7 +70,7 @@ namespace Tye2
             try
             {
                 output.WriteDebugLine("Querying services");
-                var response = await kubernetes.ListNamespacedServiceWithHttpMessagesAsync(
+                var response = await kubernetes.CoreV1.ListNamespacedServiceWithHttpMessagesAsync(
                     config.Namespace,
                     labelSelector: $"app.kubernetes.io/part-of={applicationName}");
 
@@ -92,7 +92,7 @@ namespace Tye2
             try
             {
                 output.WriteDebugLine("Querying deployments");
-                var response = await kubernetes.ListNamespacedDeploymentWithHttpMessagesAsync(
+                var response = await kubernetes.AppsV1.ListNamespacedDeploymentWithHttpMessagesAsync(
                     config.Namespace,
                     labelSelector: $"app.kubernetes.io/part-of={applicationName}");
 
@@ -114,7 +114,7 @@ namespace Tye2
             try
             {
                 output.WriteDebugLine("Querying secrets");
-                var response = await kubernetes.ListNamespacedSecretWithHttpMessagesAsync(
+                var response = await kubernetes.CoreV1.ListNamespacedSecretWithHttpMessagesAsync(
                     config.Namespace,
                     labelSelector: $"app.kubernetes.io/part-of={applicationName}");
 
@@ -137,7 +137,7 @@ namespace Tye2
             try
             {
                 output.WriteDebugLine("Querying ingresses");
-                var response = await kubernetes.ListNamespacedIngressWithHttpMessagesAsync(
+                var response = await kubernetes.NetworkingV1.ListNamespacedIngressWithHttpMessagesAsync(
                     config.Namespace,
                     labelSelector: $"app.kubernetes.io/part-of={applicationName}");
 
@@ -187,7 +187,7 @@ namespace Tye2
 
                     try
                     {
-                        var response = await resource.Deleter(resource.Metadata.Name);
+                        await resource.Deleter(resource.Metadata.Name);
 
                         output.WriteDebugLine($"Successfully deleted resource: '{resource.Kind}' '{resource.Metadata.Name}'.");
                     }
@@ -207,24 +207,24 @@ namespace Tye2
                     string.Join(Environment.NewLine, exceptions.Select(e => $"\t'{e.resource.Kind}' '{e.resource.Metadata.Name}': {e.exception.Body}.")));
             }
 
-            Task<Microsoft.Rest.HttpOperationResponse<V1Status>> DeleteService(string name)
+            Task DeleteService(string name)
             {
-                return kubernetes!.DeleteNamespacedServiceWithHttpMessagesAsync(name, config!.Namespace);
+                return kubernetes!.CoreV1.DeleteNamespacedServiceWithHttpMessagesAsync(name, config!.Namespace);
             }
 
-            Task<Microsoft.Rest.HttpOperationResponse<V1Status>> DeleteDeployment(string name)
+            Task DeleteDeployment(string name)
             {
-                return kubernetes!.DeleteNamespacedDeploymentWithHttpMessagesAsync(name, config!.Namespace);
+                return kubernetes!.AppsV1.DeleteNamespacedDeploymentWithHttpMessagesAsync(name, config!.Namespace);
             }
 
-            Task<Microsoft.Rest.HttpOperationResponse<V1Status>> DeleteSecret(string name)
+            Task DeleteSecret(string name)
             {
-                return kubernetes!.DeleteNamespacedSecretWithHttpMessagesAsync(name, config!.Namespace);
+                return kubernetes!.CoreV1.DeleteNamespacedSecretWithHttpMessagesAsync(name, config!.Namespace);
             }
 
-            Task<Microsoft.Rest.HttpOperationResponse<V1Status>> DeleteIngress(string name)
+            Task DeleteIngress(string name)
             {
-                return kubernetes!.DeleteNamespacedIngressWithHttpMessagesAsync(name, config!.Namespace);
+                return kubernetes!.NetworkingV1.DeleteNamespacedIngressWithHttpMessagesAsync(name, config!.Namespace);
             }
         }
 
@@ -239,9 +239,9 @@ namespace Tye2
         {
             public readonly string Kind;
             public readonly V1ObjectMeta Metadata;
-            public readonly Func<string, Task<Microsoft.Rest.HttpOperationResponse<V1Status>>> Deleter;
+            public readonly Func<string, Task> Deleter;
 
-            public Resource(string kind, V1ObjectMeta metadata, Func<string, Task<Microsoft.Rest.HttpOperationResponse<V1Status>>> deleter)
+            public Resource(string kind, V1ObjectMeta metadata, Func<string, Task> deleter)
             {
                 Kind = kind;
                 Metadata = metadata;
