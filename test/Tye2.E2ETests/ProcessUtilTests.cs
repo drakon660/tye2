@@ -28,7 +28,7 @@ public class ProcessUtilTests
 
         Assert.Equal(0, buildExitCode);
 
-        var outputAssembly = Path.Combine(projectDirectory.DirectoryPath, "bin", "Debug", "net8.0", "execute-async-app.dll");
+        var outputAssembly = Path.Combine(projectDirectory.DirectoryPath, "bin", "Debug", "net10.0", "execute-async-app.dll");
         var tempRoot = Path.GetFullPath(Path.GetTempPath());
         var workingDir = Path.GetFullPath(projectDirectory.DirectoryPath);
         var builtAssemblyPath = Path.GetFullPath(outputAssembly);
@@ -53,7 +53,7 @@ public class ProcessUtilTests
 
         Assert.Equal(0, result.ExitCode);
 
-        var outputAssembly = Path.Combine(projectDirectory.DirectoryPath, "bin", "Debug", "net8.0", "execute-async-app.dll");
+        var outputAssembly = Path.Combine(projectDirectory.DirectoryPath, "bin", "Debug", "net10.0", "execute-async-app.dll");
         var tempRoot = Path.GetFullPath(Path.GetTempPath());
         var workingDir = Path.GetFullPath(projectDirectory.DirectoryPath);
         var builtAssemblyPath = Path.GetFullPath(outputAssembly);

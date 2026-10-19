@@ -1052,7 +1052,7 @@ services:
         [Fact]
         public async Task CreateAsync_DockerFileService_WithBuildArgsAndContext_MapsProperties()
         {
-            var dockerfile = CreateFile("docker/Dockerfile", "FROM mcr.microsoft.com/dotnet/runtime:8.0");
+            var dockerfile = CreateFile("docker/Dockerfile", "FROM mcr.microsoft.com/dotnet/runtime:10.0");
             var file = CreateTyeYaml(@"
 name: dockerfile-app
 services:

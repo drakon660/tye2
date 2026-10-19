@@ -44,8 +44,8 @@ namespace Tye2.UnitTests
             string name = "myservice",
             string assemblyName = "MyService",
             string targetFrameworkName = "net",
-            string targetFrameworkVersion = "8.0",
-            string targetFramework = "net8.0",
+            string targetFrameworkVersion = "10.0",
+            string targetFramework = "net10.0",
             bool isAspNet = true,
             string? version = null,
             string? args = null)
@@ -73,7 +73,7 @@ namespace Tye2.UnitTests
         [InlineData("5.0", true)]
         [InlineData("6.0", true)]
         [InlineData("7.0", true)]
-        [InlineData("8.0", true)]
+        [InlineData("10.0", true)]
         [InlineData("9.0", true)]
         [InlineData("3.1", false)]
         [InlineData("2.1", false)]
@@ -144,19 +144,19 @@ namespace Tye2.UnitTests
         public void ApplyContainerDefaults_Net_SetsBaseImageTagFromVersion()
         {
             var app = CreateApp();
-            var project = CreateProject(targetFrameworkName: "net", targetFrameworkVersion: "8.0");
+            var project = CreateProject(targetFrameworkName: "net", targetFrameworkVersion: "10.0");
             var container = new ContainerInfo();
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            container.BaseImageTag.Should().Be("8.0");
+            container.BaseImageTag.Should().Be("10.0");
         }
 
         [Fact]
         public void ApplyContainerDefaults_PresetBaseImageTag_DoesNotOverwrite()
         {
             var app = CreateApp();
-            var project = CreateProject(targetFrameworkName: "net", targetFrameworkVersion: "8.0");
+            var project = CreateProject(targetFrameworkName: "net", targetFrameworkVersion: "10.0");
             var container = new ContainerInfo { BaseImageTag = "7.0" };
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
@@ -183,8 +183,8 @@ namespace Tye2.UnitTests
         // =====================================================================
 
         [Theory]
-        [InlineData("8.0", true, "mcr.microsoft.com/dotnet/aspnet")]
-        [InlineData("8.0", false, "mcr.microsoft.com/dotnet/runtime")]
+        [InlineData("10.0", true, "mcr.microsoft.com/dotnet/aspnet")]
+        [InlineData("10.0", false, "mcr.microsoft.com/dotnet/runtime")]
         [InlineData("5.0", true, "mcr.microsoft.com/dotnet/aspnet")]
         [InlineData("5.0", false, "mcr.microsoft.com/dotnet/runtime")]
         [InlineData("3.1", true, "mcr.microsoft.com/dotnet/core/aspnet")]
@@ -220,7 +220,7 @@ namespace Tye2.UnitTests
         // =====================================================================
 
         [Theory]
-        [InlineData("8.0", "mcr.microsoft.com/dotnet/sdk")]
+        [InlineData("10.0", "mcr.microsoft.com/dotnet/sdk")]
         [InlineData("5.0", "mcr.microsoft.com/dotnet/sdk")]
         [InlineData("3.1", "mcr.microsoft.com/dotnet/core/sdk")]
         public void ApplyContainerDefaults_SetsCorrectBuildImageName(string version, string expectedSdk)
@@ -240,19 +240,19 @@ namespace Tye2.UnitTests
         public void ApplyContainerDefaults_SetsBuildImageTagFromVersion()
         {
             var app = CreateApp();
-            var project = CreateProject(targetFrameworkVersion: "8.0");
+            var project = CreateProject(targetFrameworkVersion: "10.0");
             var container = new ContainerInfo();
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
 
-            container.BuildImageTag.Should().Be("8.0");
+            container.BuildImageTag.Should().Be("10.0");
         }
 
         [Fact]
         public void ApplyContainerDefaults_PresetBuildImageTag_DoesNotOverwrite()
         {
             var app = CreateApp();
-            var project = CreateProject(targetFrameworkVersion: "8.0");
+            var project = CreateProject(targetFrameworkVersion: "10.0");
             var container = new ContainerInfo { BuildImageTag = "7.0" };
 
             DockerfileGenerator.ApplyContainerDefaults(app, project, container);
@@ -541,20 +541,20 @@ namespace Tye2.UnitTests
             {
                 UseMultiphaseDockerfile = true,
                 BaseImageName = "mcr.microsoft.com/dotnet/aspnet",
-                BaseImageTag = "8.0",
+                BaseImageTag = "10.0",
                 BuildImageName = "mcr.microsoft.com/dotnet/sdk",
-                BuildImageTag = "8.0",
+                BuildImageTag = "10.0",
             };
             var filePath = Path.Combine(_tempDir, "Dockerfile");
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
             var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
-            content.Should().Contain("FROM mcr.microsoft.com/dotnet/sdk:8.0 as SDK");
+            content.Should().Contain("FROM mcr.microsoft.com/dotnet/sdk:10.0 as SDK");
             content.Should().Contain("WORKDIR /src");
             content.Should().Contain("COPY . .");
             content.Should().Contain("RUN dotnet publish -c Release -o /out");
-            content.Should().Contain("FROM mcr.microsoft.com/dotnet/aspnet:8.0 as RUNTIME");
+            content.Should().Contain("FROM mcr.microsoft.com/dotnet/aspnet:10.0 as RUNTIME");
             content.Should().Contain("WORKDIR /app");
             content.Should().Contain("COPY --from=SDK /out .");
             content.Should().Contain("ENTRYPOINT [\"dotnet\", \"WebApp.dll\"]");
@@ -569,9 +569,9 @@ namespace Tye2.UnitTests
             {
                 UseMultiphaseDockerfile = true,
                 BaseImageName = "mcr.microsoft.com/dotnet/aspnet",
-                BaseImageTag = "8.0",
+                BaseImageTag = "10.0",
                 BuildImageName = "mcr.microsoft.com/dotnet/sdk",
-                BuildImageTag = "8.0",
+                BuildImageTag = "10.0",
             };
             var filePath = Path.Combine(_tempDir, "Dockerfile");
 
@@ -590,9 +590,9 @@ namespace Tye2.UnitTests
             {
                 UseMultiphaseDockerfile = true,
                 BaseImageName = "mcr.microsoft.com/dotnet/aspnet",
-                BaseImageTag = "8.0",
+                BaseImageTag = "10.0",
                 BuildImageName = "mcr.microsoft.com/dotnet/sdk",
-                BuildImageTag = "8.0",
+                BuildImageTag = "10.0",
             };
             var filePath = Path.Combine(_tempDir, "Dockerfile");
 
@@ -611,9 +611,9 @@ namespace Tye2.UnitTests
             {
                 UseMultiphaseDockerfile = null,
                 BaseImageName = "mcr.microsoft.com/dotnet/aspnet",
-                BaseImageTag = "8.0",
+                BaseImageTag = "10.0",
                 BuildImageName = "mcr.microsoft.com/dotnet/sdk",
-                BuildImageTag = "8.0",
+                BuildImageTag = "10.0",
             };
             var filePath = Path.Combine(_tempDir, "Dockerfile");
 
@@ -637,14 +637,14 @@ namespace Tye2.UnitTests
             {
                 UseMultiphaseDockerfile = false,
                 BaseImageName = "mcr.microsoft.com/dotnet/runtime",
-                BaseImageTag = "8.0",
+                BaseImageTag = "10.0",
             };
             var filePath = Path.Combine(_tempDir, "Dockerfile");
 
             await DockerfileGenerator.WriteDockerfileAsync(_output, app, project, container, filePath);
 
             var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
-            content.Should().Contain("FROM mcr.microsoft.com/dotnet/runtime:8.0");
+            content.Should().Contain("FROM mcr.microsoft.com/dotnet/runtime:10.0");
             content.Should().Contain("WORKDIR /app");
             content.Should().Contain("COPY . /app");
             content.Should().Contain("ENTRYPOINT [\"dotnet\", \"WorkerApp.dll\"]");
@@ -661,7 +661,7 @@ namespace Tye2.UnitTests
             {
                 UseMultiphaseDockerfile = false,
                 BaseImageName = "mcr.microsoft.com/dotnet/runtime",
-                BaseImageTag = "8.0",
+                BaseImageTag = "10.0",
             };
             var filePath = Path.Combine(_tempDir, "Dockerfile");
 
@@ -680,7 +680,7 @@ namespace Tye2.UnitTests
             {
                 UseMultiphaseDockerfile = false,
                 BaseImageName = "mcr.microsoft.com/dotnet/runtime",
-                BaseImageTag = "8.0",
+                BaseImageTag = "10.0",
             };
             var filePath = Path.Combine(_tempDir, "Dockerfile");
 
@@ -699,7 +699,7 @@ namespace Tye2.UnitTests
             {
                 UseMultiphaseDockerfile = false,
                 BaseImageName = "mcr.microsoft.com/dotnet/runtime",
-                BaseImageTag = "8.0",
+                BaseImageTag = "10.0",
             };
             var filePath = Path.Combine(_tempDir, "Dockerfile");
 
@@ -722,7 +722,7 @@ namespace Tye2.UnitTests
             {
                 UseMultiphaseDockerfile = false,
                 BaseImageName = "mcr.microsoft.com/dotnet/runtime",
-                BaseImageTag = "8.0",
+                BaseImageTag = "10.0",
             };
             var filePath = Path.Combine(_tempDir, "Dockerfile");
 

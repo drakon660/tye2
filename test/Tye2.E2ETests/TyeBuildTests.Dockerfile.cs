@@ -224,7 +224,7 @@ namespace Tye2.E2ETests
             var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye-no-buildproperties.yaml"));
 
             var outputContext = new OutputContext(sink, Verbosity.Debug);
-            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile, "net8.0");
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile, "net10.0");
 
             application.Registry = new ContainerRegistry("test", null);
 
@@ -255,10 +255,10 @@ namespace Tye2.E2ETests
 
             using var projectDirectory = CopyTestProjectDirectory(projectName);
 
-            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye-with-net8.0.yaml"));
+            var projectFile = new FileInfo(Path.Combine(projectDirectory.DirectoryPath, "tye-with-net10.0.yaml"));
 
             var outputContext = new OutputContext(sink, Verbosity.Debug);
-            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile, "net8.0");
+            var application = await ApplicationFactory.CreateAsync(outputContext, projectFile, "net10.0");
 
             application.Registry = new ContainerRegistry("test", null);
 

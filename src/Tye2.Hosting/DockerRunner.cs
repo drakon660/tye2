@@ -79,7 +79,6 @@ namespace Tye2.Hosting
 
                 // Inject a proxy per non-container service. This allows the container to use normal host names within the
                 // container network to talk to services on the host
-                //TODO check this after upgrade to .net 8
                 var proxyContainer = new DockerRunInfo($"mcr.microsoft.com/dotnet/sdk:10.0", "dotnet Tye2.Proxy.dll")
                 {
                     WorkingDirectory = "/app",
